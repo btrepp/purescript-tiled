@@ -1,9 +1,13 @@
 module Test.Main where
 
 import Prelude
+
+import Data.Tiled.Raw.Tileset.Unit (tilesetSuite)
 import Effect (Effect)
-import Effect.Console (log)
+import Test.Unit.Main (runTest)
 
 main :: Effect Unit
-main = do
-  log "You should add some tests."
+main = 
+  runTest do
+    tilesetSuite
+ 
