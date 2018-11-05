@@ -13,3 +13,7 @@ As these are serialized into json they can represent invalid states.
 
 The aim is provide primitives that can be used by higher levels.
 
+#NOTES
+
+This is currently a massive work in progress. Nothing actually
+works yet
