@@ -1,4 +1,4 @@
-#purescript-tiled
+# purescript-tiled
 
 A work in progress libarary for parsing tiled [https://www.mapeditor.org/]
 maps into purescript records.
@@ -13,7 +13,7 @@ As these are serialized into json they can represent invalid states.
 
 The aim is provide primitives that can be used by higher levels.
 
-#NOTES
+# NOTES
 
 This is currently a massive work in progress. Nothing actually
 works yet
