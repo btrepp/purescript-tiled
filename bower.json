@@ -17,6 +17,7 @@
     "purescript-spec": "^3.0.0",
     "purescript-assert": "^4.0.0",
     "purescript-test-unit": "^14.0.0",
-    "purescript-aff": "^5.0.2"
+    "purescript-aff": "^5.0.2",
+    "purescript-node-fs": "^5.0.0"
   }
 }
