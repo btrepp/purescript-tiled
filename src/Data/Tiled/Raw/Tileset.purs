@@ -9,8 +9,7 @@ newtype Terrain = Terrain
     { name :: String
       , tile :: Int
     }
-instance eqTerrain :: Eq Terrain where
-    eq (Terrain a) (Terrain b ) = a == b
+derive instance eqTerrain :: Eq Terrain 
 instance showTerrain :: Show Terrain where
     show (Terrain x) = show x
     
