@@ -1,18 +1,17 @@
-module Test.Tiled.Map (mapSuite) where
-
+module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
 
 import Data.Newtype (unwrap)
-import Data.Tiled.Raw.Map (Map,MapRecord, RenderOrder(..))
+import Data.Tiled.File.Map (Map,MapRecord, RenderOrder(..))
 import Effect.Aff (Aff)
 import Test.Tiled.Util (loadJsonFile)
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert as Assert
 
 
-mapSuite :: TestSuite
-mapSuite = 
-    suite "map" do
+desert :: TestSuite
+desert = 
+    suite "desert" do
         testField "height" _.height 40
         testField "width"  _.width 40
         testField "nextlayerid" _.nextLayerId 2
@@ -35,3 +34,8 @@ mapSuite =
         testField name field expected = 
             test name do
               (unwrap >>> field) <$> load >>= Assert.equal expected
+
+mapSuite :: TestSuite
+mapSuite = 
+    suite "map" do
+        desert

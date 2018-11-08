@@ -1,4 +1,4 @@
-module Data.Tiled.Raw.Map where
+module Data.Tiled.File.Map where
 
 import Prelude
 
@@ -6,10 +6,8 @@ import Data.Argonaut (decodeJson, (.?),(.??), class DecodeJson)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap)
-import Data.Tiled.Raw.Color (Color)
-import Data.Tiled.Raw.Layer (Layer)
-import Data.Tiled.Raw.Property (Property)
-import Data.Tiled.Raw.Tileset (Tileset)
+import Data.Tiled.File.Layer (Layer)
+import Data.Tiled.File.Tileset (Tileset)
 
 data Orientation = Orthoganal | Isometric | Staggered | Hexagonal
 data RenderOrder = RightDown | RightUp | LeftDown | LeftUp
@@ -22,6 +20,8 @@ instance showRenderOrder :: Show RenderOrder where
     show LeftUp = "Left Up"
 data StaggerAxis  = X | Y
 data StaggerIndex = Odd | Even
+type Color = String
+type Property = String
 
 type MapRecord = {
     backgroundColor:: Maybe Color 
@@ -44,6 +44,9 @@ type MapRecord = {
     , version:: Number
     , width:: Int
 }
+
+
+
 newtype Map = Map MapRecord
 derive instance newtypeMap :: Newtype Map _
 
@@ -67,7 +70,6 @@ instance decodeJsonMap :: DecodeJson Map where
         width <- o .? "width"
         mapType <- o .? "type"
         renderOrder <- pure RightDown
-
 
         pure $ wrap $ {
             backgroundColor

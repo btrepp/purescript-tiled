@@ -2,9 +2,9 @@ module Test.Main where
 
 import Prelude
 
-import Data.Tiled.Raw.Tileset.Unit (tilesetSuite)
+import Test.Data.Tiled.File.Tileset (tilesetSuite)
+import Test.Data.Tiled.File.Map (mapSuite)
 import Effect (Effect)
-import Test.Tiled.Map (mapSuite)
 import Test.Unit.Main (runTest)
 
 main :: Effect Unit

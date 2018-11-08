@@ -1,11 +1,8 @@
-module Data.Tiled.Raw.Layer where
+module Data.Tiled.File.Layer where
   
 import Data.Argonaut.Decode.Class (class DecodeJson)
 import Data.Argonaut.Decode.Generic.Rep (genericDecodeJson)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe)
-import Data.Tiled.Raw.Property (Property) 
-import Data.Tiled.Raw.Color (Color)
 data Compression = Zlib | Gzip 
 newtype Base64Data = Base64Data String
 data LayerData =  Array Int | Compressed Base64Data

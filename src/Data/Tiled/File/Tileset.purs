@@ -1,9 +1,9 @@
-module Data.Tiled.Raw.Tileset where
+module Data.Tiled.File.Tileset where
   
 import Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-
+import Data.Newtype (class Newtype)
 
 newtype Terrain = Terrain 
     { name :: String
@@ -14,8 +14,7 @@ instance showTerrain :: Show Terrain where
     show (Terrain x) = show x
     
 type Version = String 
-
-newtype Tileset = Tileset 
+type TilesetRecord =
     { columns :: Int
       , image :: String
       , imageHeight :: Int
@@ -28,7 +27,10 @@ newtype Tileset = Tileset
       , tiledVersion :: Version
       , tileHeight :: Int
     }
+newtype Tileset = Tileset TilesetRecord
 
+
+derive instance newtypeTileset :: Newtype Tileset _
 instance showTileset :: Show Tileset where
     show (Tileset t) = show t
 instance eqTileset :: Eq Tileset where
