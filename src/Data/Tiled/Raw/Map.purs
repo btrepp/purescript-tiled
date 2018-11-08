@@ -13,10 +13,17 @@ import Data.Tiled.Raw.Tileset (Tileset)
 
 data Orientation = Orthoganal | Isometric | Staggered | Hexagonal
 data RenderOrder = RightDown | RightUp | LeftDown | LeftUp
+derive instance eqRenderOrder :: Eq RenderOrder
+instance showRenderOrder :: Show RenderOrder where
+    show :: RenderOrder -> String
+    show RightDown = "Right Down"
+    show RightUp = "Right Up"
+    show LeftDown = "Left Down"
+    show LeftUp = "Left Up"
 data StaggerAxis  = X | Y
 data StaggerIndex = Odd | Even
 
-newtype Map = Map {
+type MapRecord = {
     backgroundColor:: Maybe Color 
     , height :: Int
     , hexSideLength :: Maybe Int
@@ -26,7 +33,7 @@ newtype Map = Map {
     , nextObjectId :: Int
     , orientation :: Orientation
     , properties :: Array Property
-    --, renderOrder :: RenderOrder
+    , renderOrder :: RenderOrder
     --, staggerAxis :: StaggerAxis
     --, staggerIndex :: StaggerIndex
     , tiledVersion :: String
@@ -37,6 +44,7 @@ newtype Map = Map {
     , version:: Number
     , width:: Int
 }
+newtype Map = Map MapRecord
 derive instance newtypeMap :: Newtype Map _
 
 instance decodeJsonMap :: DecodeJson Map where
@@ -58,11 +66,13 @@ instance decodeJsonMap :: DecodeJson Map where
         version <- o .? "version"
         width <- o .? "width"
         mapType <- o .? "type"
+        renderOrder <- pure RightDown
 
 
         pure $ wrap $ {
             backgroundColor
             , height
+            , renderOrder
             , hexSideLength
             , infinite
             , layers
