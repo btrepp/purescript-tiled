@@ -3,15 +3,23 @@ module Data.Tiled.File.Tileset where
 import Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype, wrap)
 
-newtype Terrain = Terrain 
+type TerrainRecord = 
     { name :: String
-      , tile :: Int
+      ,tile :: Int
     }
+newtype Terrain = Terrain TerrainRecord
 derive instance eqTerrain :: Eq Terrain 
+derive instance newtypeTerrain :: Newtype Terrain _
 instance showTerrain :: Show Terrain where
     show (Terrain x) = show x
+instance decodeJsonTerrain :: DecodeJson Terrain where    
+    decodeJson js = do
+        obj <- decodeJson js
+        name <- obj .? "name"
+        tile <- obj .? "tile"
+        pure $ wrap $ { name, tile}            
     
 type Version = String 
 type TilesetRecord =
@@ -26,9 +34,12 @@ type TilesetRecord =
       , tileCount :: Int
       , tiledVersion :: Version
       , tileHeight :: Int
+      -- tiles
+      , tileWidth :: Int
+      , typeTileset :: String
+      , version :: Number
     }
 newtype Tileset = Tileset TilesetRecord
-
 
 derive instance newtypeTileset :: Newtype Tileset _
 instance showTileset :: Show Tileset where
@@ -48,9 +59,12 @@ instance decodeTileSet :: DecodeJson Tileset where
     tileCount <- obj .? "tilecount"
     tiledVersion <- obj .? "tiledversion"
     tileHeight <- obj .? "tileheight"
-    terrains <- pure mempty
+    terrains <-  obj .? "terrains"
+    typeTileset <- obj .? "type"
+    tileWidth <- obj .? "tilewidth"
+    version <- obj .? "version"
 
-    pure $ Tileset {   columns
+    pure $ wrap {   columns
                      , image
                      , imageHeight
                      , imageWidth
@@ -60,4 +74,7 @@ instance decodeTileSet :: DecodeJson Tileset where
                      , terrains
                      , tileCount
                      , tiledVersion
-                     , tileHeight }
+                     , tileHeight 
+                     , typeTileset
+                     , tileWidth
+                     , version}
