@@ -2,7 +2,7 @@ module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
 
 import Data.Newtype (unwrap)
-import Data.Tiled.File.Map (Map,MapRecord, RenderOrder(..))
+import Data.Tiled.File.Map (Map, MapRecord, RenderOrder(..),Orientation(..))
 import Effect.Aff (Aff)
 import Test.Tiled.Util (loadJsonFile)
 import Test.Unit (TestSuite, suite, test)
@@ -22,6 +22,7 @@ desert =
         testField "tileheight" _.tileHeight 32
         testField "tilewidth" _.tileWidth 32
         testField "version" _.version 1.2
+        testField "orientation" _.orientation Orthoganal
     where 
         load ::  Aff Map
         load =  loadJsonFile "maps/desert.json"
