@@ -1,12 +1,10 @@
 module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
-
-import Data.Newtype (unwrap)
-import Data.Tiled.File.Map (Map, MapRecord, RenderOrder(..),Orientation(..))
-import Effect.Aff (Aff)
-import Test.Tiled.Util (loadJsonFile)
-import Test.Unit (TestSuite, suite, test)
-import Test.Unit.Assert as Assert
+import Data.Newtype (class Newtype)
+import Data.Tiled.File.Map (Map, Orientation(..), RenderOrder(..))
+import Test.Unit (TestSuite, suite)
+import Test.Tiled.Util as T 
+import Data.Array as Array
 
 
 desert :: TestSuite
@@ -22,19 +20,13 @@ desert =
         testField "tileheight" _.tileHeight 32
         testField "tilewidth" _.tileWidth 32
         testField "version" _.version 1.2
+        testField "layer count" (_.layers >>> Array.length) 1
         testField "orientation" _.orientation Orthoganal
     where 
-        load ::  Aff Map
-        load =  loadJsonFile "maps/desert.json"
-        testField :: forall a . Eq a =>
-                                 Show a =>
-                                 String 
-                                 -> (MapRecord-> a) 
-                                 -> a 
-                                 -> TestSuite
-        testField name field expected = 
-            test name do
-              (unwrap >>> field) <$> load >>= Assert.equal expected
+        testField :: forall a b . Show b => Eq b =>  Newtype Map a => 
+                            String -> (a->b) -> b -> TestSuite
+        testField name acc exp = 
+            T.testField T.desertMap name acc exp 
 
 mapSuite :: TestSuite
 mapSuite = 

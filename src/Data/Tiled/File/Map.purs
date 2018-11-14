@@ -20,7 +20,7 @@ data Tileset = Embedded T.Tileset
 
 newtype Color = Color String
 
-type MapRecord = {
+newtype Map = Map  {
     backgroundColor:: Maybe Color 
     , height :: Int
     , hexSideLength :: Maybe Int
@@ -41,9 +41,6 @@ type MapRecord = {
     , version:: Number
     , width:: Int
 }
-
-newtype Map = Map MapRecord
-
 derive instance newtypeMap :: Newtype Map _
 
 derive instance eqRenderOrder :: Eq RenderOrder
