@@ -5,15 +5,23 @@ import Prelude
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut (decodeJson, (.?), (.??), class DecodeJson)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, wrap)
+import Data.Newtype (class Newtype)
 import Data.Tiled.File.Layer (Layer)
 import Data.Tiled.File.Property (Property)
 import Data.Tiled.File.Tileset as T
 
-data Orientation = Orthoganal | Isometric | Staggered | Hexagonal
 data RenderOrder = RightDown | RightUp | LeftDown | LeftUp
 data StaggerAxis  = X | Y
 data StaggerIndex = Odd | Even
+data Orientation = Orthoganal
+                 | Isometric 
+                 | Staggered 
+                    { axis :: StaggerAxis
+                    , index :: StaggerIndex}
+                 | Hexagonal 
+                    { axis :: StaggerAxis                      
+                    , index :: StaggerIndex
+                    , hexSideLength :: Int }
 data Tileset = Embedded T.Tileset
              | External { firstgid :: Int
                           , source :: String}
@@ -23,7 +31,6 @@ newtype Color = Color String
 newtype Map = Map  {
     backgroundColor:: Maybe Color 
     , height :: Int
-    , hexSideLength :: Maybe Int
     , infinite :: Boolean
     , layers :: Array Layer
     , nextLayerId :: Int
@@ -31,8 +38,6 @@ newtype Map = Map  {
     , orientation :: Orientation
     , properties :: Maybe (Array Property)
     , renderOrder :: RenderOrder
-    , staggerAxis :: Maybe StaggerAxis
-    , staggerIndex :: Maybe StaggerIndex
     , tiledVersion :: String
     , tileHeight :: Int
     , tileSets :: Array Tileset
@@ -45,19 +50,25 @@ derive instance newtypeMap :: Newtype Map _
 
 derive instance eqRenderOrder :: Eq RenderOrder
 derive instance eqOrientation :: Eq Orientation
+derive instance eqStaggerAxis :: Eq StaggerAxis
+derive instance eqStaggerIndex :: Eq StaggerIndex
 
+instance showStaggerIndex :: Show StaggerIndex where
+    show Odd = "Odd"
+    show Even = "Even"
+instance showStaggerAxis :: Show StaggerAxis where        
+    show X = "X"
+    show Y = "Y"
 instance showRenderOrder :: Show RenderOrder where
-    show :: RenderOrder -> String
     show RightDown = "Right Down"
     show RightUp = "Right Up"
     show LeftDown = "Left Down"
     show LeftUp = "Left Up"
 instance showOrientation :: Show Orientation where        
-    show :: Orientation -> String
     show Orthoganal = "Orthonganal"
     show Isometric = "Isometric"
-    show Staggered = "Staggered"
-    show Hexagonal = "Hexagonal"
+    show (Staggered x) = "Staggered " <> show x
+    show (Hexagonal x)= "Hexagonal " <> show x
 
 
 instance decodeJsonTileset :: DecodeJson Tileset where
@@ -69,15 +80,6 @@ instance decodeJsonTileset :: DecodeJson Tileset where
             Just firstgid -> do
                 source <- o .? "source"
                 pure $ External { source, firstgid }
-instance decodeJsonOrientation ::DecodeJson Orientation where
-    decodeJson js = do
-        o <- decodeJson js
-        case o of
-            "orthogonal" -> pure Orthoganal
-            "isometric" -> pure Isometric
-            "staggered" -> pure Staggered
-            "hexagonal" -> pure Hexagonal
-            x -> throwError $ x <> "is not an orientation"
 instance decodeJsonRenderOrder :: DecodeJson RenderOrder where
     decodeJson js =  do
         st <- decodeJson js
@@ -100,18 +102,17 @@ instance decodeJsonStaggerIndex :: DecodeJson StaggerIndex where
       case si of
         "odd" -> pure Odd
         "even" -> pure Even
-        x -> throwError $ x <> "is not a stagged index"
+        x -> throwError $ x <> "is not a stagger index"
 instance decodeJsonMap :: DecodeJson Map where
     decodeJson js= do
         o <- decodeJson js
         backgroundColor <- pure Nothing
         height <- o .? "height"
-        hexSideLength <- o .?? "hexsidelength"
         infinite <- o .? "infinite"
         layers <- o .? "layers"
         nextLayerId <- o .? "nextlayerid"
         nextObjectId <- o .? "nextobjectid"
-        orientation <- o .? "orientation"
+        orientation <- decodeOrientation o
         properties <- o .?? "properties"
         tiledVersion <- o .? "tiledversion"
         tileHeight <- o .? "tileheight"
@@ -121,14 +122,11 @@ instance decodeJsonMap :: DecodeJson Map where
         width <- o .? "width"
         mapType <- o .? "type"
         renderOrder <- o .? "renderorder"
-        staggerAxis <- o .?? "staggeraxis"
-        staggerIndex <- o .?? "staggerindex"
 
-        pure $ wrap $ {
+        pure $ Map $ {
             backgroundColor
             , height
             , renderOrder
-            , hexSideLength
             , infinite
             , layers
             , nextLayerId
@@ -142,7 +140,23 @@ instance decodeJsonMap :: DecodeJson Map where
             , mapType
             , version
             , width
-            , staggerAxis
-            , staggerIndex
         }
+        where 
+        
+        staggerData o = do
+            index <- o .? "staggerindex"
+            axis <- o .? "staggeraxis"
+            pure { index, axis }
+        decodeOrientation o = do
+            text <- o.? "orientation"
+            case text of 
+             "orthogonal" -> pure Orthoganal
+             "isometric" -> pure Isometric
+             "staggered" -> Staggered <$> staggerData o
+             "hexagonal" -> do
+                index <- _.index <$>staggerData o
+                axis <- _.axis <$> staggerData o
+                hexSideLength <- o .? "hexsidelength"
+                pure $ Hexagonal {index,axis,hexSideLength}
+             x -> throwError $ x <> "is not a orientation"
 
