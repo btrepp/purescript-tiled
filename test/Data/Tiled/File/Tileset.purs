@@ -3,10 +3,51 @@ module Test.Data.Tiled.File.Tileset (tilesetSuite) where
 import Prelude
 
 import Data.Array as Array
+import Data.Newtype (class Newtype,unwrap)
 import Data.Tiled.File.Tileset (Tileset)
-import Test.Unit (TestSuite, suite)
-import Data.Newtype(class Newtype)
+import Data.Tiled.File.Tileset.Tile (Tile)
+import Data.Tiled.File.Tileset.Terrain (Terrain)
 import Test.Tiled.Util as T
+import Data.Tuple.Nested (tuple4)
+import Test.Unit (TestSuite, suite)
+import Effect.Aff (Aff)
+
+tile :: TestSuite
+tile = 
+  suite "index 0" do
+    testField "id" _.id 0
+    testField "terrain" _.terrain (tuple4 0 0 0 1)
+
+  where
+    item :: Aff Tile
+    item = (flip Array.index 0)
+            <$> _.tiles
+            <$> unwrap
+            <$> T.desertTileset
+            >>= T.failMaybe
+    testField :: forall a b . Eq b => Show b => Newtype Tile a =>
+                      String -> (a->b) -> b -> TestSuite
+    testField name acc exp = 
+      T.testField item name acc exp                      
+
+terrain :: TestSuite
+terrain = 
+  suite "index 0" do
+    testField "name" _.name "Desert"
+    testField "tile" _.tile 29
+
+  where
+    item :: Aff Terrain
+    item = (flip Array.index 0)
+            <$> _.terrains
+            <$> unwrap
+            <$> T.desertTileset
+            >>= T.failMaybe
+    testField :: forall a b . Eq b => Show b => Newtype Terrain a =>
+                      String -> (a->b) -> b -> TestSuite
+    testField name acc exp = 
+      T.testField item name acc exp                      
+
 
 desertSuite :: TestSuite
 desertSuite = 
@@ -19,25 +60,17 @@ desertSuite =
       testField "name" _.name "Desert"
       testField "spacing" _.spacing 1
       testField "count" (_.terrains >>> Array.length) 4
-      --suite "terrains" do
-        --testTerrain "desert" 0 "Desert" 29
-        --testTerrain "brick" 1 "Brick" 9
-        --testTerrain "cobblestone" 2 "Cobblestone" 33
-        --testTerrain "dirt" 3 "Dirt" 14
       testField "tilecount" _.tileCount 48
       testField "tiledversion" _.tiledVersion "1.2.0"
       testField "tileheight" _.tileHeight 32
-      suite "tiles" do
-        testField "count" (_.tiles >>> Array.length) 48
-        --testTile 0 0 (tuple4 0 0 0 1)
-        --testTile 1 1 (tuple4 0 0 1 1)
-        --testTile 2 2 (tuple4 0 0 1 0)
-        --testTile 3 3 (tuple4 3 3 3 0)
-        --testTile 4 4 (tuple4 3 3 0 3)
-        --testTile 5 5 (tuple4 0 0 0 3)
       testField "tilewidth" _.tileWidth 32
       testField "type" _.typeTileset "tileset"
       testField "version" _.version 1.2
+      testField "tile count" (_.tiles >>> Array.length) 48
+      suite "tiles" do
+        tile
+      suite "terrains" do
+        terrain
 
   where 
     testField :: forall a b . Eq b => Show b => Newtype Tileset a =>

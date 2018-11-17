@@ -15,9 +15,13 @@ import Effect.Aff (Aff)
 import Test.Tiled.Util as T
 import Test.Unit (TestSuite, suite)
 
-layer0 :: Aff Layer -> TestSuite 
-layer0 file = 
-    suite "[0]" do
+isComp :: Data -> Boolean
+isComp (Compressed _) = true
+isComp _ = false
+
+layer ::  TestSuite 
+layer = 
+    suite "index 0" do
         testField "compression" _.compression Nothing
         testField "data" (_.data>>>isComp) true
         testField "encoding" _.encoding Base64
@@ -31,20 +35,20 @@ layer0 file =
         testField "x" _.x 0
         testField "y" _.y 0
     where 
+       item :: Aff Layer
+       item =  (flip Array.index 0 ) 
+                <$>_.layers  
+                <$> unwrap 
+                <$> T.desertMap
+                >>= T.failMaybe
        testField :: forall a b . Eq b => Show b => Newtype Layer a =>
                         String -> (a->b) -> b -> TestSuite
        testField name acc exp = 
-            T.testField file name acc exp
+            T.testField item name acc exp
 
-       isComp :: Data -> Boolean
-       isComp (Compressed _) = true
-       isComp _ = false
-
-desert :: Aff Map -> TestSuite
-desert map = 
+desert :: TestSuite
+desert = 
     suite "desert" do
-        suite "layers" do
-            layer0 (layer 0)
         testField "height" _.height 40
         testField "width"  _.width 40
         testField "nextlayerid" _.nextLayerId 2
@@ -57,24 +61,17 @@ desert map =
         testField "version" _.version 1.2
         testField "layer count" (_.layers >>> Array.length) 1
         testField "orientation" _.orientation Orthoganal
+        suite "layers" do
+            layer
     where 
-
         testField :: forall a b . Show b => Eq b =>  Newtype Map a => 
                             String -> (a->b) -> b -> TestSuite
         testField name acc exp = 
-            T.testField map name acc exp 
-        layer :: Int -> Aff Layer            
-        layer ind = 
-            ((l >>> flip Array.index ind) <$> T.desertMap)
-            >>= T.failMaybe
-            where 
-                l :: Map -> Array Layer
-                l m = _.layers $ unwrap m
-
+            T.testField T.desertMap name acc exp 
 
 mapSuite :: TestSuite
 mapSuite = 
     suite "Map" 
-        do desert T.desertMap
+        do desert 
 
 
