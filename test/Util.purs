@@ -5,15 +5,16 @@ import Prelude
 import Data.Argonaut (decodeJson, class DecodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.Tiled.File.Map (Map)
+import Data.Tiled.File.Tileset (Tileset)
 import Effect.Aff (Aff, throwError, error)
 import Effect.Class (liftEffect)
 import Node.Encoding (Encoding(..))
 import Node.FS.Sync as FS
 import Test.Unit (TestSuite, test)
 import Test.Unit.Assert as Assert
-import Data.Tiled.File.Map (Map)
-import Data.Maybe(Maybe(..))
 
 -- | Loads a file for a type that supports decodeJson
 loadJsonFile :: forall a. DecodeJson a => String -> Aff a
@@ -30,6 +31,9 @@ loadJsonFile path = do
 
 desertMap :: Aff Map
 desertMap = loadJsonFile "maps/desert.json"
+
+desertTileset :: Aff Tileset
+desertTileset = loadJsonFile "maps/desert_tileset.json"
 
 failMaybe :: forall a. Maybe a -> Aff a
 failMaybe (Just a) = pure a

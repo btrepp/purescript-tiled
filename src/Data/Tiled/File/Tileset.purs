@@ -9,30 +9,53 @@ import Data.Either(Either(..))
 import Data.Maybe(Maybe(..))
 import Data.Array as Array
 
-type TerrainRecord = 
+newtype Terrain = Terrain
     { name :: String
       ,tile :: Int
     }
-newtype Terrain = Terrain TerrainRecord
-derive instance eqTerrain :: Eq Terrain 
+newtype Tile = Tile 
+    { id :: Int
+    , terrain :: Tuple4 Int Int Int Int }
+
+newtype Tileset = Tileset
+    { columns :: Int
+      , image :: String
+      , imageHeight :: Int
+      , imageWidth :: Int
+      , margin :: Int
+      , name :: String
+      , spacing :: Int
+      , terrains :: Array Terrain
+      , tileCount :: Int
+      , tiledVersion :: Version
+      , tileHeight :: Int
+      , tiles :: Array Tile
+      , tileWidth :: Int
+      , typeTileset :: String
+      , version :: Number
+    }
+
 derive instance newtypeTerrain :: Newtype Terrain _
+derive instance newtypeTile :: Newtype Tile _
+derive instance newtypeTileset :: Newtype Tileset _
+
+derive instance eqTerrain :: Eq Terrain 
+derive instance eqTile :: Eq Tile
+derive instance eqTileset :: Eq Tileset
+
+instance showTile :: Show Tile where
+    show (Tile x) = "Tile" <> show x
 instance showTerrain :: Show Terrain where
-    show (Terrain x) = show x
+    show (Terrain x) =  "Terrain" <> show x
+instance showTileset :: Show Tileset where
+    show (Tileset t) = "Tileset" <> show t
+
 instance decodeJsonTerrain :: DecodeJson Terrain where    
     decodeJson js = do
         obj <- decodeJson js
         name <- obj .? "name"
         tile <- obj .? "tile"
         pure $ wrap $ { name, tile}            
-    
-type TileRecord = 
-    { id :: Int
-    , terrain :: Tuple4 Int Int Int Int }
-newtype Tile = Tile TileRecord    
-derive instance eqTile :: Eq Tile
-derive instance newtypeTile :: Newtype Tile _
-instance showTile :: Show Tile where
-    show (Tile x) = show x
 instance decodeJsonTile :: DecodeJson Tile where
     decodeJson js = do
         obj <- decodeJson js
@@ -51,30 +74,6 @@ instance decodeJsonTile :: DecodeJson Tile where
               
 
 type Version = String 
-type TilesetRecord =
-    { columns :: Int
-      , image :: String
-      , imageHeight :: Int
-      , imageWidth :: Int
-      , margin :: Int
-      , name :: String
-      , spacing :: Int
-      , terrains :: Array Terrain
-      , tileCount :: Int
-      , tiledVersion :: Version
-      , tileHeight :: Int
-      , tiles :: Array Tile
-      , tileWidth :: Int
-      , typeTileset :: String
-      , version :: Number
-    }
-newtype Tileset = Tileset TilesetRecord
-
-derive instance newtypeTileset :: Newtype Tileset _
-instance showTileset :: Show Tileset where
-    show (Tileset t) = show t
-instance eqTileset :: Eq Tileset where
-    eq (Tileset t) (Tileset t2) = t == t2
 instance decodeTileSet :: DecodeJson Tileset where
   decodeJson json = do
     obj <- decodeJson json
