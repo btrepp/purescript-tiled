@@ -11,7 +11,8 @@
     "purescript-effect": "^2.0.0",
     "purescript-argonaut": "^4.0.1",
     "purescript-maybe": "^4.0.0",
-    "purescript-argonaut-generic": "^2.0.0"
+    "purescript-argonaut-generic": "^2.0.0",
+    "purescript-base64-codec": "^0.10.3"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",

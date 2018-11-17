@@ -5,16 +5,11 @@ import Data.Array as Array
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tiled.File.Map (Map)
 import Data.Tiled.File.Map.Layer (Layer,Type(..))
-import Data.Tiled.File.Map.Layer.Data (Data(..))
 import Data.Tiled.File.Map.Orientation (Orientation(..))
 import Data.Tiled.File.Map.RenderOrder (RenderOrder(..))
 import Effect.Aff (Aff)
 import Test.Tiled.Util as T
 import Test.Unit (TestSuite, suite,testSkip)
-
-isComp :: Data -> Boolean
-isComp (Compressed _) = true
-isComp _ = false
 
 isTile :: Type  -> Boolean
 isTile (Tile _) = true
