@@ -2,34 +2,37 @@ module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
 
 import Data.Array as Array
-import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tiled.File.Map (Map)
-import Data.Tiled.File.Map.Layer (Layer)
+import Data.Tiled.File.Map.Layer (Layer,Type(..))
 import Data.Tiled.File.Map.Layer.Data (Data(..))
-import Data.Tiled.File.Map.Layer.Encoding (Encoding(..))
-import Data.Tiled.File.Map.Layer.Type (Type(..))
 import Data.Tiled.File.Map.Orientation (Orientation(..))
 import Data.Tiled.File.Map.RenderOrder (RenderOrder(..))
 import Effect.Aff (Aff)
 import Test.Tiled.Util as T
-import Test.Unit (TestSuite, suite)
+import Test.Unit (TestSuite, suite,testSkip)
 
 isComp :: Data -> Boolean
 isComp (Compressed _) = true
 isComp _ = false
 
+isTile :: Type  -> Boolean
+isTile (Tile _) = true
+isTile _ = false
+
 layer ::  TestSuite 
 layer = 
     suite "index 0" do
-        testField "compression" _.compression Nothing
-        testField "data" (_.data>>>isComp) true
-        testField "encoding" _.encoding Base64
+        testSkip "chunks" (pure unit)
+    --    testField "compression" _.compression Nothing
+      --  testField "data" (_.data>>>isComp) true
+      --  testField "encoding" _.encoding Base64
         testField "height" _.height 40
         testField "id" _.id 1
         testField "name" _.name "Ground"
+        testSkip "objects" (pure unit)
         testField "opacity" _.opacity 1
-        testField "type" _.type TileLayer
+        testField "type" (_.type>>>isTile) true
         testField "visible" _.visible true
         testField "width" _.width 40
         testField "x" _.x 0
