@@ -1,21 +1,11 @@
 module Data.Tiled.File.Tileset where
   
 import Prelude
-
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Newtype (class Newtype, wrap)
-import Data.Tuple.Nested (Tuple4,tuple4)
-import Data.Either(Either(..))
-import Data.Maybe(Maybe(..))
-import Data.Array as Array
-
-newtype Terrain = Terrain
-    { name :: String
-      ,tile :: Int
-    }
-newtype Tile = Tile 
-    { id :: Int
-    , terrain :: Tuple4 Int Int Int Int }
+import Data.Tiled.File.Tileset.Terrain(Terrain)
+import Data.Tiled.File.Tileset.Tile(Tile)
+import Data.Tiled.File.Tileset.Version(Version)
 
 newtype Tileset = Tileset
     { columns :: Int
@@ -35,45 +25,11 @@ newtype Tileset = Tileset
       , version :: Number
     }
 
-derive instance newtypeTerrain :: Newtype Terrain _
-derive instance newtypeTile :: Newtype Tile _
 derive instance newtypeTileset :: Newtype Tileset _
-
-derive instance eqTerrain :: Eq Terrain 
-derive instance eqTile :: Eq Tile
 derive instance eqTileset :: Eq Tileset
-
-instance showTile :: Show Tile where
-    show (Tile x) = "Tile" <> show x
-instance showTerrain :: Show Terrain where
-    show (Terrain x) =  "Terrain" <> show x
 instance showTileset :: Show Tileset where
     show (Tileset t) = "Tileset" <> show t
 
-instance decodeJsonTerrain :: DecodeJson Terrain where    
-    decodeJson js = do
-        obj <- decodeJson js
-        name <- obj .? "name"
-        tile <- obj .? "tile"
-        pure $ wrap $ { name, tile}            
-instance decodeJsonTile :: DecodeJson Tile where
-    decodeJson js = do
-        obj <- decodeJson js
-        id <- obj .? "id"
-        ter <- obj .? "terrain"
-        a <- value $ Array.index ter 0
-        b <- value $ Array.index ter 1
-        c <- value $ Array.index ter 2
-        d <- value $ Array.index ter 3
-        terrain <- pure $ tuple4 a b c d
-        pure $ wrap $ {id,terrain}
-        where
-            value :: forall a. Maybe a -> Either String a         
-            value (Just a) = Right a
-            value Nothing = Left "Tiles incorrect"
-              
-
-type Version = String 
 instance decodeTileSet :: DecodeJson Tileset where
   decodeJson json = do
     obj <- decodeJson json

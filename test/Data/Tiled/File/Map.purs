@@ -15,7 +15,6 @@ import Effect.Aff (Aff)
 import Test.Tiled.Util as T
 import Test.Unit (TestSuite, suite)
 
-
 layer0 :: Aff Layer -> TestSuite 
 layer0 file = 
     suite "[0]" do
