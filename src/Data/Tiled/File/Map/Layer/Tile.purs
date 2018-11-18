@@ -39,37 +39,33 @@ instance decodeJsonTile :: DecodeJson Tile where
     decodeJson js = do
         o <- decodeJson js
         encoding <- o .?? "encoding"
+        compression <- o .?? "compression"
         
-        case encoding of
-            Nothing -> do
+        case encoding,compression of
+            Nothing , _ -> do
               data' <- o .? "data"
               pure $ Tile { encoding : Nothing , data: data'}
-            Just Base64 -> do
-                algorithm <- o .?? "compression" 
-                case algorithm of
-                    Nothing -> do
-                        d <- o .? "data"
-                             >>= base64Decode
-                        pure $ Tile $ { 
-                            encoding : Just Uncompressed
-                            ,data : extract d
-                        }
-                    Just Zlib -> do                        
-                        d <- o .? "data"
-                            >>= base64Decode
-                            >>= zlib
-                        pure $ Tile $ {
-                            encoding : Just $ Compressed Zlib
-                            , data : extract d
-                        }
-                    Just Gzip -> do
-                        d <- o .? "data"
-                             >>= base64Decode
-                             >>= gzip
-                        pure $ Tile $ {
-                            encoding : Just  $ Compressed Gzip
-                            , data : extract d
-                        }                             
+            Just Base64, Nothing -> do
+              data' <- o .? "data"
+                         >>= base64Decode
+              pure $ Tile { encoding : Just Uncompressed
+                            , data : extract data'}
+            Just Base64, Just Zlib  -> do
+                d <- o .? "data"
+                     >>= base64Decode
+                     >>= zlib
+                pure $ Tile $ {
+                        encoding : Just $ Compressed Zlib
+                        , data : extract d
+                }
+            Just Base64, Just Gzip -> do
+                d <- o .? "data"
+                     >>= base64Decode
+                     >>= gzip
+                pure $ Tile $ {
+                        encoding : Just  $ Compressed Gzip
+                        , data : extract d
+                }                             
         where                        
             base64Decode :: String -> Either String (ArrayBuffer)
             base64Decode s =
