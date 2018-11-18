@@ -22,7 +22,10 @@ Zlib is supported, but is called via pako.
 Pako must be available for compression to work.
 Other wise the file will throw an error
 
-#Testing
+You may need to install it into your project
+`npm install --save pako`
+
+# Testing
 
 The default desert map (available in the tiled example directory)
 Is included in json format and tested against.
