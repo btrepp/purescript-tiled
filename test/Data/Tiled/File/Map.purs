@@ -6,16 +6,17 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tiled.File.Map (Map)
 import Data.Tiled.File.Map.Layer (Layer, Type(..))
+import Data.Tiled.File.Map.Layer.Tile (Data(..))
 import Data.Tiled.File.Map.Layer.Tile as Ti
 import Data.Tiled.File.Map.Orientation (Orientation(..))
 import Data.Tiled.File.Map.RenderOrder (RenderOrder(..))
 import Effect.Aff (Aff)
 import Test.Tiled.Util as T
-import Test.Unit (TestSuite, suite, testSkip,test)
+import Test.Unit (TestSuite, suite, testSkip, test)
 import Test.Unit.Assert as Assert
 
 isTile :: Type  -> Boolean
-isTile (Tile _) = true
+isTile (TileLayer _) = true
 isTile _ = false
 
 
@@ -24,7 +25,16 @@ tile =
     suite "index 0" do
         test "gid" do
             val <- item
-            Assert.equal 30 val
+            Assert.equal 30 val.gid
+        test "flipx" do
+            val <- item
+            Assert.equal false val.flipX
+        test "flipy" do
+            val <- item
+            Assert.equal false val.flipY
+        test "flipdiag" do
+            val <- item
+            Assert.equal false val.flipDiagonal
     where
        lay :: Aff Layer
        lay =  (flip Array.index 0 ) 
@@ -32,16 +42,19 @@ tile =
                 <$> unwrap 
                 <$> T.desertMap
                 >>= T.failMaybe
-       item :: Aff Int
+       item :: Aff _
        item = getFirst 
               <$> _.type 
               <$> unwrap
               <$> lay
               >>= T.failMaybe
-       getFirst :: Type -> Maybe Int
-       getFirst (Tile (Ti.Tile x)) = Array.index x.data 0
+              >>= (getT >>> pure)
+       getFirst :: Type -> Maybe Data
+       getFirst (TileLayer (Ti.TileLayer x)) = Array.index x.data 0
        getFirst _ = Nothing
 
+       getT :: Data -> _
+       getT (Data x) = x
 
 layer ::  TestSuite 
 layer = 

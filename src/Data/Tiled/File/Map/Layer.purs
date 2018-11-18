@@ -5,7 +5,7 @@ import Data.Argonaut ((.?), (.??))
 import Data.Newtype (class Newtype)
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
-import Data.Tiled.File.Map.Layer.Tile (Tile)
+import Data.Tiled.File.Map.Layer.Tile (TileLayer)
 import Data.Tiled.File.Map.Layer.ObjectGroup (ObjectGroup)
 import Data.Tiled.File.Map.Layer.Image (Image)
 import Data.Tiled.File.Property (Property)
@@ -13,7 +13,7 @@ import Data.Tiled.File.Property (Property)
 -- | The layer type
 -- | This can be tiles, objects, images
 -- | or a further grouping of layers
-data Type = Tile Tile
+data Type = TileLayer TileLayer
           | ObjectGroup ObjectGroup
           | Image Image
           | Group { layers :: Array Layer}
@@ -40,7 +40,7 @@ instance decodeJsonType :: DecodeJson Type where
       o <- decodeJson js
       text <- o .? "type"
       case text of 
-        "tilelayer" -> Tile <$> decodeJson js
+        "tilelayer" -> TileLayer <$> decodeJson js
         "objectgroup" -> ObjectGroup <$> decodeJson js
         "imagelayer" -> Image <$> decodeJson js
         "group" -> do
