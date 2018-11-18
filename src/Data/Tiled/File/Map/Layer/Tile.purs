@@ -11,6 +11,8 @@ import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Base64 as B
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Pako as Pako
+import Effect.Exception (message)
 type Gid = Int -- TODO, unsigned int
 
 data Algorithm = Zlib | Gzip 
@@ -74,10 +76,19 @@ instance decodeJsonTile :: DecodeJson Tile where
                     _ -> throwError "Unable to decode bas64"
 
             zlib :: ArrayBuffer -> Either String (ArrayBuffer)
-            zlib _ = throwError "Zlib not supported"
+            zlib r= 
+                case Pako.inflate r of 
+                    Left e -> throwError $ message e
+                    Right x -> pure x
 
             gzip :: ArrayBuffer -> Either String (ArrayBuffer)
-            gzip _ = throwError "GZIP Not supported"
+            gzip r= 
+                -- Pako seems to autodect inflat things
+                -- This is here as a punt and is.. untested
+                case Pako.inflate r of 
+                    Left e -> throwError $ message e
+                    Right x -> pure x
+
 
             extract :: ArrayBuffer -> Array Int
             extract x = toIntArray $ asInt8Array $ V.whole x
