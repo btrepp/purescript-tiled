@@ -15,7 +15,8 @@
     "purescript-base64-codec": "^0.10.3",
     "purescript-arraybuffer-types": "^2.0.0",
     "purescript-arraybuffer": "^8.0.0",
-    "purescript-simple-json": "^4.3.0"
+    "purescript-simple-json": "^4.3.0",
+    "purescript-integers": "^4.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",

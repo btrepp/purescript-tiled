@@ -7,6 +7,7 @@ import Data.Argonaut ((.?), (.??))
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
 import Data.ArrayBuffer.DataView as V
 import Data.ArrayBuffer.Typed (asInt32Array, toIntArray)
+import Data.Int.Bits as Bit
 import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Base64 as B
 import Data.Either (Either(..))
@@ -24,11 +25,14 @@ newtype Data = Data {
 
 fromInt :: Int -> Data
 fromInt i = Data {
-    flipX : false
-    , flipY : false
-    , flipDiagonal : false
-    , gid : i
-}
+    flipX,flipY,flipDiagonal,gid
+    }
+    where 
+        flipX = (Bit.zshr i 31) > 0  
+        flipY = (Bit.zshr (Bit.shl i 1) 31) > 0
+        flipDiagonal = (Bit.zshr (Bit.shl i 2) 31) > 0
+        gid = Bit.zshr (Bit.shl i 3 ) 3
+    
 
 data Algorithm = Zlib | Gzip 
 data Encoding = Base64 
