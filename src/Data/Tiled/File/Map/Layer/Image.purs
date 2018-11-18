@@ -2,7 +2,7 @@ module Data.Tiled.File.Map.Layer.Image where
 
 import Control.Monad.Error.Class (throwError)
 import Data.Maybe (Maybe)
-import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
+import Data.Argonaut.Decode.Class (class DecodeJson)
 import Data.Tiled.File.Color (Color)
 newtype Image = Image {
     image :: String

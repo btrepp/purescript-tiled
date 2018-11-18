@@ -5,6 +5,8 @@ import Prelude
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut ((.?), (.??))
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
+import Data.ArrayBuffer.DataView as V
+import Data.ArrayBuffer.Typed (asInt8Array, toIntArray)
 import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Base64 as B
 import Data.Either (Either(..))
@@ -72,7 +74,7 @@ instance decodeJsonTile :: DecodeJson Tile where
             base64Decode :: String -> Either String (ArrayBuffer)
             base64Decode s =
                 case B.decodeBase64 $ B.Base64 s of
-                    Just b -> pure b
+                    Just arr -> pure arr 
                     _ -> throwError "Unable to decode bas64"
 
             zlib :: ArrayBuffer -> Either String (ArrayBuffer)
@@ -82,4 +84,4 @@ instance decodeJsonTile :: DecodeJson Tile where
             gzip _ = throwError "GZIP Not supported"
 
             extract :: ArrayBuffer -> Array Int
-            extract _ = []
+            extract x = toIntArray $ asInt8Array $ V.whole x

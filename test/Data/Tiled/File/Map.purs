@@ -2,18 +2,46 @@ module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
 
 import Data.Array as Array
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tiled.File.Map (Map)
-import Data.Tiled.File.Map.Layer (Layer,Type(..))
+import Data.Tiled.File.Map.Layer (Layer, Type(..))
+import Data.Tiled.File.Map.Layer.Tile as Ti
 import Data.Tiled.File.Map.Orientation (Orientation(..))
 import Data.Tiled.File.Map.RenderOrder (RenderOrder(..))
 import Effect.Aff (Aff)
 import Test.Tiled.Util as T
-import Test.Unit (TestSuite, suite,testSkip)
+import Test.Unit (TestSuite, suite, testSkip,test)
+import Test.Unit.Assert as Assert
 
 isTile :: Type  -> Boolean
 isTile (Tile _) = true
 isTile _ = false
+
+
+tile :: TestSuite
+tile =
+    suite "index 0" do
+        test "gid" do
+            val <- item
+            Assert.equal 30 val
+    where
+       lay :: Aff Layer
+       lay =  (flip Array.index 0 ) 
+                <$>_.layers  
+                <$> unwrap 
+                <$> T.desertMap
+                >>= T.failMaybe
+       item :: Aff Int
+       item = getFirst 
+              <$> _.type 
+              <$> unwrap
+              <$> lay
+              >>= T.failMaybe
+       getFirst :: Type -> Maybe Int
+       getFirst (Tile (Ti.Tile x)) = Array.index x.data 0
+       getFirst _ = Nothing
+
 
 layer ::  TestSuite 
 layer = 
@@ -32,6 +60,8 @@ layer =
         testField "width" _.width 40
         testField "x" _.x 0
         testField "y" _.y 0
+        suite "tile" do
+            tile
     where 
        item :: Aff Layer
        item =  (flip Array.index 0 ) 
