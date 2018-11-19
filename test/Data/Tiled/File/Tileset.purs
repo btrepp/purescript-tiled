@@ -3,14 +3,14 @@ module Test.Data.Tiled.File.Tileset (tilesetSuite) where
 import Prelude
 
 import Data.Array as Array
-import Data.Newtype (class Newtype,unwrap)
-import Data.Tiled.File.Tileset (Tileset)
-import Data.Tiled.File.Tileset.Tile (Tile)
+import Data.Newtype (class Newtype, unwrap,wrap)
+import Data.Tiled.File.Tileset (Tileset, imagePath)
 import Data.Tiled.File.Tileset.Terrain (Terrain)
-import Test.Tiled.Util as T
+import Data.Tiled.File.Tileset.Tile (Tile)
 import Data.Tuple.Nested (tuple4)
-import Test.Unit (TestSuite, suite)
 import Effect.Aff (Aff)
+import Test.Tiled.Util as T
+import Test.Unit (TestSuite, suite)
 
 tile :: TestSuite
 tile = 
@@ -67,6 +67,7 @@ desertSuite =
       testField "type" _.typeTileset "tileset"
       testField "version" _.version 1.2
       testField "tile count" (_.tiles >>> Array.length) 48
+      testField "image fn" (wrap >>> imagePath) "tmw_desert_spacing.png"
       suite "tiles" do
         tile
       suite "terrains" do

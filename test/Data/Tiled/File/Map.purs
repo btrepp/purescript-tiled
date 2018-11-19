@@ -3,8 +3,9 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, unwrap)
-import Data.Tiled.File.Map (Map)
+import Data.Newtype (class Newtype, unwrap,wrap)
+import Data.List (List,(:))
+import Data.Tiled.File.Map (Map, Tileset(..), externalTileSets)
 import Data.Tiled.File.Map.Layer (Layer, Type(..))
 import Data.Tiled.File.Map.Layer.Tile (Data(..))
 import Data.Tiled.File.Map.Layer.Tile as Ti
@@ -14,6 +15,7 @@ import Effect.Aff (Aff)
 import Test.Tiled.Util as T
 import Test.Unit (TestSuite, suite, testSkip, test)
 import Test.Unit.Assert as Assert
+import Data.Monoid (mempty)
 
 isTile :: Type  -> Boolean
 isTile (TileLayer _) = true
@@ -87,6 +89,33 @@ layer =
        testField name acc exp = 
             T.testField item name acc exp
 
+tileset :: TestSuite
+tileset =
+    suite "index 0" do
+        testField "source" (_.source) "desert_tileset.json"
+        testField "gid" (_.firstgid) 1
+        
+    where 
+        item ::Aff Tileset
+        item = (flip Array.index 0)
+                <$> _.tileSets
+                <$> unwrap
+                <$> T.desertMap
+                >>= T.failMaybe
+        asExt = ext <$> item >>= T.failMaybe
+        ext (Embedded _) = Nothing
+        ext (External e) = Just e
+
+        testField :: forall b . Eq b => Show b =>
+                        String -> 
+                        ({source::String ,firstgid::Int} -> b) -> b -> TestSuite
+        testField name acc exp = 
+            test name do
+                x <- asExt
+                Assert.equal exp (acc x)
+
+
+
 desert :: TestSuite
 desert = 
     suite "desert" do
@@ -102,13 +131,20 @@ desert =
         testField "version" _.version 1.2
         testField "layer count" (_.layers >>> Array.length) 1
         testField "orientation" _.orientation Orthoganal
+        testField "external paths" (wrap >>> externalTileSets) expectedPaths
         suite "layers" do
             layer
+        suite "tileset" do
+            tileset
     where 
         testField :: forall a b . Show b => Eq b =>  Newtype Map a => 
                             String -> (a->b) -> b -> TestSuite
         testField name acc exp = 
             T.testField T.desertMap name acc exp 
+
+        expectedPaths :: List String
+        expectedPaths = 
+            "desert_tileset.json" : mempty
 
 mapSuite :: TestSuite
 mapSuite = 

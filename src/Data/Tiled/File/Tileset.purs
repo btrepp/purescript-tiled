@@ -2,7 +2,7 @@ module Data.Tiled.File.Tileset where
   
 import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Newtype (class Newtype, wrap)
+import Data.Newtype (class Newtype, wrap,unwrap)
 import Data.Tiled.File.Tileset.Terrain(Terrain)
 import Data.Tiled.File.Tileset.Tile(Tile)
 import Data.Tiled.File.Tileset.Version(Version)
@@ -64,3 +64,6 @@ instance decodeTileSet :: DecodeJson Tileset where
                      , tileWidth
                      , version
                      , tiles}
+
+imagePath :: Tileset -> String                     
+imagePath m = _.image $ unwrap m

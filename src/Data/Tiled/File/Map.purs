@@ -4,8 +4,9 @@ module Data.Tiled.File.Map
 import Prelude
 
 import Data.Argonaut (decodeJson, (.?), (.??), class DecodeJson)
+import Data.List (List, fromFoldable, mapMaybe)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype,unwrap)
 import Data.Tiled.File.Color (Color)
 import Data.Tiled.File.Map.Layer (Layer)
 import Data.Tiled.File.Map.Orientation (Orientation)
@@ -85,3 +86,17 @@ instance decodeJsonMap :: DecodeJson Map where
             , version
             , width
         }
+
+-- | Gets the paths of external tilesets
+-- | From the map
+-- | These would be required to do anything with the map
+externalTileSets :: Map -> List String
+externalTileSets m = 
+    mapMaybe source 
+    $ fromFoldable 
+    $_.tileSets 
+    $ unwrap m
+    where
+        source  :: Tileset -> Maybe String
+        source (Embedded _ ) = Nothing
+        source (External e) = pure e.source
