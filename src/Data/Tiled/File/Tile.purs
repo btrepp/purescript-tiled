@@ -1,18 +1,22 @@
-module Data.Tiled.File.Map.Layer.Tile where
+module Data.Tiled.File.Tile where
 
 import Prelude
-
 import Control.Monad.Error.Class (throwError)
-import Data.Argonaut ((.?), (.??))
+import Data.Argonaut ((.:), (.:?))
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)
 import Data.ArrayBuffer.DataView as V
 import Data.ArrayBuffer.Typed (asInt32Array, toIntArray)
-import Data.Int.Bits as Bit
 import Data.ArrayBuffer.Types (ArrayBuffer)
 import Data.Base64 as B
 import Data.Either (Either(..))
+import Data.Int.Bits as Bit
+import Data.Lens (Traversal', Lens')
+import Data.Lens.Index (ix)
+import Data.Lens.Iso.Newtype (_Newtype)
+import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype,wrap)
+import Data.Newtype (class Newtype, wrap)
+import Data.Symbol (SProxy(..))
 import Effect.Exception (message)
 import Pako as Pako
 
@@ -22,6 +26,7 @@ newtype Data = Data {
     ,flipDiagonal :: Boolean
     ,gid :: Int
 }
+derive instance newtypeData :: Newtype Data _
 
 fromInt :: Int -> Data
 fromInt i = Data {
@@ -44,6 +49,22 @@ newtype TileLayer = TileLayer
     }
 derive instance newtypeTileLayer :: Newtype TileLayer _
 
+_tile :: Int -> Traversal' TileLayer Data
+_tile i = _Newtype <<< prop (SProxy::SProxy "data")
+                   <<< ix i
+
+_gid :: forall a b r . Newtype a {gid::b|r} => Lens' a b                   
+_gid = _Newtype <<< prop (SProxy::SProxy "gid")            
+
+_flipX :: forall a b r . Newtype a {flipX::b|r} => Lens' a b
+_flipX = _Newtype <<< prop (SProxy::SProxy "flipX")
+
+_flipY :: forall a b r . Newtype a {flipY::b|r} => Lens' a b
+_flipY = _Newtype <<< prop (SProxy::SProxy "flipY")
+
+_flipDiagonal :: forall a b r . Newtype a {flipDiagonal::b|r} => Lens' a b
+_flipDiagonal = _Newtype <<< prop (SProxy::SProxy "flipDiagonal")
+
 instance decodeJsonEncoding :: DecodeJson Encoding where
     decodeJson js = do
         s <- decodeJson js 
@@ -61,8 +82,8 @@ instance decodeJsonAlgorithm :: DecodeJson Algorithm where
 instance decodeJsonTile :: DecodeJson TileLayer where
     decodeJson js = do
         o <- decodeJson js
-        encoding <- o .?? "encoding"
-        compression <- o .?? "compression"
+        encoding <- o .:? "encoding"
+        compression <- o .:? "compression"
         
 
         --- This has gotten a bit procedural
@@ -70,15 +91,15 @@ instance decodeJsonTile :: DecodeJson TileLayer where
         --- should refactor
         case encoding,compression of
             Nothing , _ -> do
-              data' <- o .? "data"
+              data' <- o .: "data"
               pure $ wrap { encoding : Nothing , data: convert data'}
             Just Base64, Nothing -> do
-              data' <- o .? "data"
+              data' <- o .: "data"
                          >>= base64Decode
               pure $ wrap { encoding : Just Uncompressed
                             , data : convert $ extract data'}
             Just Base64, Just Zlib  -> do
-                d <- o .? "data"
+                d <- o .: "data"
                      >>= base64Decode
                      >>= zlib
                 pure $ wrap $ {
@@ -86,7 +107,7 @@ instance decodeJsonTile :: DecodeJson TileLayer where
                         , data : convert $ extract d
                 }
             Just Base64, Just Gzip -> do
-                d <- o .? "data"
+                d <- o .: "data"
                      >>= base64Decode
                      >>= gzip
                 pure $ wrap $ {
@@ -96,7 +117,7 @@ instance decodeJsonTile :: DecodeJson TileLayer where
         where                        
             base64Decode :: String -> Either String (ArrayBuffer)
             base64Decode s =
-                case B.decodeBase64 $ B.Base64 s of
+                case B.decodeBase64 <$> B.fromString s of
                     Just arr -> pure arr 
                     _ -> throwError "Unable to decode bas64"
 

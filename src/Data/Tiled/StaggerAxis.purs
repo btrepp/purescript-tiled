@@ -1,4 +1,4 @@
-module Data.Tiled.File.Map.StaggerAxis where
+module Data.Tiled.StaggerAxis where
 
 
 import Prelude

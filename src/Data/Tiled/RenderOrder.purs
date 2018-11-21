@@ -1,4 +1,4 @@
-module Data.Tiled.File.Map.RenderOrder where
+module Data.Tiled.RenderOrder where
 
 import Prelude
 import Control.Monad.Error.Class (throwError)

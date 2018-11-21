@@ -1,69 +1,99 @@
-module Data.Tiled.File.Tileset where
+module Data.Tiled.File.Tileset 
+    (Tile
+    , Tileset
+    , Terrain 
+    , decodeJsonTileset)
+    where
   
 import Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Newtype (class Newtype, wrap,unwrap)
-import Data.Tiled.File.Tileset.Terrain(Terrain)
-import Data.Tiled.File.Tileset.Tile(Tile)
-import Data.Tiled.File.Tileset.Version(Version)
+import Data.Argonaut (Json, decodeJson, (.:), (.:?))
+import Data.Either (Either)
+import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 
-newtype Tileset = Tileset
-    { columns :: Int
+
+type Tile =
+    { id :: Int
+    , terrain :: Array Int }
+
+type Terrain =
+    { name :: String
+      ,tile :: Int
+    }
+
+type Tileset = 
+      { columns :: Int
       , image :: String
       , imageHeight :: Int
       , imageWidth :: Int
       , margin :: Int
       , name :: String
       , spacing :: Int
-      , terrains :: Array Terrain
+      , terrains :: Maybe (Array Terrain)
       , tileCount :: Int
-      , tiledVersion :: Version
+      , tiledVersion :: String
       , tileHeight :: Int
-      , tiles :: Array Tile
+      , tiles :: Maybe (Array Tile)
       , tileWidth :: Int
-      , typeTileset :: String
+      , type :: String
       , version :: Number
     }
 
-derive instance newtypeTileset :: Newtype Tileset _
-derive instance eqTileset :: Eq Tileset
-instance showTileset :: Show Tileset where
-    show (Tileset t) = "Tileset" <> show t
+decodeJsonTile :: Json -> Either String Tile
+decodeJsonTile js = do
+    o <- decodeJson js
+    id <- o .: "id"
+    terrainArray <- o .: "terrain"
+    terrain <- traverse decodeJson terrainArray
+    pure { id
+         , terrain }
 
-instance decodeTileSet :: DecodeJson Tileset where
-  decodeJson json = do
-    obj <- decodeJson json
-    columns <- obj .? "columns"
-    image <- obj .? "image"
-    imageHeight <- obj .? "imageheight"
-    imageWidth <- obj .? "imagewidth"
-    margin <- obj .? "margin"
-    name <- obj .? "name"
-    spacing <- obj .? "spacing"
-    tileCount <- obj .? "tilecount"
-    tiledVersion <- obj .? "tiledversion"
-    tileHeight <- obj .? "tileheight"
-    terrains <-  obj .? "terrains"
-    typeTileset <- obj .? "type"
-    tileWidth <- obj .? "tilewidth"
-    version <- obj .? "version"
-    tiles <- obj .? "tiles"
 
-    pure $ wrap {   columns
-                     , image
-                     , imageHeight
-                     , imageWidth
-                     , margin
-                     , name
-                     , spacing 
-                     , terrains
-                     , tileCount
-                     , tiledVersion
-                     , tileHeight 
-                     , typeTileset
-                     , tileWidth
-                     , version
-                     , tiles}
+decodeJsonTerrain :: Json -> Either String Terrain    
+decodeJsonTerrain js = do
+    o <- decodeJson js
+    name <- o .: "name"
+    tile <- o .: "tile"
+    pure { name
+         , tile }
 
-imagePath :: Tileset -> String                     
-imagePath m = _.image $ unwrap m
+decodeJsonTileset :: Json -> Either String Tileset
+decodeJsonTileset js = do
+    o <- decodeJson js
+    columns <- o .: "columns"
+    image <- o .: "image"
+    imageHeight <- o .: "imageheight"
+    imageWidth <- o .: "imagewidth"
+    margin <- o .: "margin"
+    name <- o .: "name"
+    spacing <- o .: "spacing"
+    terrainsArray <- o .: "terrains"
+    terrains <- case terrainsArray of
+                    Just x -> Just <$> traverse decodeJsonTerrain x
+                    Nothing -> pure Nothing
+    tileCount <- o .: "tilecount"
+    tiledVersion <- o .: "tiledversion"
+    tileHeight <- o .: "tileheight"
+    tilesArray <- o .:? "tiles"
+    tiles <- case tilesArray of
+               Just x -> Just <$> traverse decodeJsonTile x
+               Nothing -> pure Nothing 
+    tileWidth <- o .: "tilewidth"
+    type_ <- o .: "type"
+    version <- o .: "version"
+    pure { columns
+         , image
+         , imageHeight
+         , imageWidth
+         , margin
+         , name
+         , spacing
+         , terrains
+         , tileCount
+         , tiledVersion
+         , tileHeight
+         , tiles
+         , tileWidth
+         , "type" : type_
+         , version
+    }    

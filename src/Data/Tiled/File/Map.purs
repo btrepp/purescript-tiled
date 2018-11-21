@@ -2,23 +2,24 @@ module Data.Tiled.File.Map
      where
 
 import Prelude
-
-import Data.Argonaut (decodeJson, (.?), (.??), class DecodeJson)
-import Data.List (List, fromFoldable, mapMaybe)
+import Data.Argonaut (Json, decodeJson, (.:), (.:?))
+import Data.Either (Either)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype,unwrap)
-import Data.Tiled.File.Color (Color)
-import Data.Tiled.File.Map.Layer (Layer)
-import Data.Tiled.File.Map.Orientation (Orientation)
-import Data.Tiled.File.Map.RenderOrder (RenderOrder)
+import Data.Tiled.Color (Color)
+import Data.Tiled.File.Layer (Layer)
 import Data.Tiled.File.Property (Property)
-import Data.Tiled.File.Tileset as T
+import Data.Tiled.File.Tileset as TS
+import Data.Tiled.Orientation (Orientation)
+import Data.Tiled.RenderOrder (RenderOrder)
+import Data.Traversable (traverse)
+import Type.Data.Boolean (kind Boolean)
 
-data Tileset = Embedded T.Tileset
-             | External { firstgid :: Int
-                          , source :: String}
-newtype Map = Map  {
-    backgroundColor:: Maybe Color 
+data Tileset = Embedded TS.Tileset
+             | Reference { firstgid :: Int
+                         , source :: String}
+                          
+type Map = 
+    { backgroundColor:: Maybe Color 
     , height :: Int
     , infinite :: Boolean
     , layers :: Array Layer
@@ -31,72 +32,56 @@ newtype Map = Map  {
     , tileHeight :: Int
     , tileSets :: Array Tileset
     , tileWidth :: Int
-    , mapType :: String
+    , type :: String
     , version:: Number
     , width:: Int
 }
-derive instance newtypeMap :: Newtype Map _
 
-instance decodeJsonTileset :: DecodeJson Tileset where
-    decodeJson js = do 
+decodeJsonTileset :: Json -> Either String Tileset
+decodeJsonTileset js = do
         o <- decodeJson js
-        gid <- o .?? "firstgid"
+        gid <- o .:? "firstgid"
         case gid of
-            Nothing -> Embedded <$> decodeJson js
+            Nothing -> Embedded <$> TS.decodeJsonTileset js
             Just firstgid -> do
-                source <- o .? "source"
-                pure $ External { source, firstgid }
+                source <- o .: "source"
+                pure $ Reference { source, firstgid }
 
-
-instance decodeJsonMap :: DecodeJson Map where
-    decodeJson js= do
+decodeJsonMap :: Json -> Either String Map 
+decodeJsonMap js = do
         o <- decodeJson js
-        backgroundColor <- pure Nothing
-        height <- o .? "height"
-        infinite <- o .? "infinite"
-        layers <- o .? "layers"
-        nextLayerId <- o .? "nextlayerid"
-        nextObjectId <- o .? "nextobjectid"
-        orientation <- decodeJson js 
-        properties <- o .?? "properties"
-        tiledVersion <- o .? "tiledversion"
-        tileHeight <- o .? "tileheight"
-        tileSets <- o .? "tilesets"
-        tileWidth <- o .? "tilewidth"
-        version <- o .? "version"
-        width <- o .? "width"
-        mapType <- o .? "type"
-        renderOrder <- o .? "renderorder"
-
-        pure $ Map $ {
-            backgroundColor
+        backgroundColor <- o .:? "backgroundcolor"
+        height <- o .: "height"
+        infinite <- o .: "infinite"
+        layers <- o .: "layers"
+        nextLayerId <- o .: "nextlayerid"
+        nextObjectId <- o .: "nextobjectid"
+        orientation <- o .: "orientation"
+        properties <- o .:? "properties"
+        renderOrder <- o .: "renderorder"
+        tiledVersion <- o .: "tiledversion"
+        tileHeight <- o .: "tileheight"
+        tileSetsJs <- o .: "tilesets"
+        tileSets <- traverse decodeJsonTileset tileSetsJs
+        tileWidth <- o .: "tilewidth"
+        t <- o .: "type"
+        version <- o .: "version"
+        width <- o .: "width"
+        pure $ 
+            { backgroundColor
             , height
-            , renderOrder
             , infinite
             , layers
             , nextLayerId
             , nextObjectId
             , orientation
             , properties
+            , renderOrder
             , tiledVersion
             , tileHeight
             , tileSets
-            , tileWidth 
-            , mapType
+            , tileWidth
+            , "type" : t
             , version
             , width
         }
-
--- | Gets the paths of external tilesets
--- | From the map
--- | These would be required to do anything with the map
-externalTileSets :: Map -> List String
-externalTileSets m = 
-    mapMaybe source 
-    $ fromFoldable 
-    $_.tileSets 
-    $ unwrap m
-    where
-        source  :: Tileset -> Maybe String
-        source (Embedded _ ) = Nothing
-        source (External e) = pure e.source
