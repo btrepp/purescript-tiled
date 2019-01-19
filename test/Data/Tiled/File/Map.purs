@@ -25,10 +25,12 @@ desert =
         test' "version" _.version  1.2
         test' "layer count" (_.layers >>> Array.length) 1
         test' "orientation" _.orientation Orthoganal
-        test' "external paths" externalTilesets expectedPaths 
-    
-        {-suite "layers" do
+        test' "external paths" externalTilesets expectedTilesets 
+
+    {-
+        suite "layers" do
             suite "index 0" do
+                let layer = (_.layer )
                 test' "height" (Just 40) $ preview (_layer 0 <<< _height)
                 test' "id" (Just 1) $ preview (_layer 0 <<< _id)
                 test' "name" (Just "Ground") $ preview (_layer 0 <<< _name)
@@ -45,20 +47,14 @@ desert =
                     test' "flipy" (Just false) $ preview (_tile 0 0 <<< _flipY)
                     test' "flipdiag" (Just false) 
                         $ preview (_tile 0 0 <<< _flipDiagonal)
-                    pure unit
-        suite "tileset" do
-            suite "index 0" do
-                test' "source" (Just "desert_tileset.json")  
-                        $ preview (_source 0)
-                test' "gid" (Just 1) $ preview (_firstgid 0)
-                -}
+                    pure unit-}
     where 
         test' :: forall b . Show b => Eq b => 
                             String -> (Map ->  b) -> b-> TestSuite
         test' name acc exp  = testField T.desertMap name acc exp
 
-        expectedPaths :: Map.Map Int String
-        expectedPaths = 
+        expectedTilesets :: Map.Map Int String
+        expectedTilesets = 
             Map.singleton 1 "desert_tileset.json"
 
 mapSuite :: TestSuite

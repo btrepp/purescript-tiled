@@ -1,6 +1,8 @@
 module Data.Tiled.File.Map 
     (Map
     ,Tileset
+    ,Layer
+    ,Property
     ,decodeJsonMap
     ,externalTilesets
     )
@@ -8,14 +10,13 @@ module Data.Tiled.File.Map
 
 import Prelude
 
+import Control.Monad.Error.Class (throwError)
 import Data.Argonaut (Json, decodeJson, (.:), (.:?))
 import Data.Either (Either)
+import Data.Filterable (compact)
 import Data.Map as M
 import Data.Maybe (Maybe(..))
-import Data.Filterable (compact)
 import Data.Tiled.Color (Color)
-import Data.Tiled.File.Layer (Layer)
-import Data.Tiled.File.Property (Property)
 import Data.Tiled.File.Tileset as TS
 import Data.Tiled.Orientation (Orientation)
 import Data.Tiled.RenderOrder (RenderOrder)
@@ -23,10 +24,46 @@ import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Type.Data.Boolean (kind Boolean)
 
+
+-- | Tileds version of a key value pair
+-- | It includes the type definition
+type Property = 
+    { name :: String
+    , type :: String
+    , value :: String }
+
+-- | A tileset inside a map
+-- | This can be a fully embedded tileset
+-- | or a reference
 data Tileset = Embedded TS.Tileset
              | Reference { firstgid :: Int
                          , source :: String}
                           
+-- | The layer type
+-- | This can be tiles, objects, images
+-- | or a further grouping of layers
+data Layer = TileLayer TileData
+
+-- | A Data Layer in the tiled program
+-- | This corresponds to tile information
+type TileData =  {
+    height :: Int
+    , id :: Int
+    , name :: String
+    , offsetX :: Maybe Number
+    , offsetY :: Maybe Number
+    , opacity :: Int
+    , properties :: Maybe (Array Property)
+    , visible :: Boolean
+    , width :: Int
+    , x :: Int
+    , y :: Int
+}
+
+-- | The Map definition
+-- | Note this may not be fully fleshed out
+-- | It may require the loading of any external
+-- | tilesets to be useable
 type Map = 
     { backgroundColor:: Maybe Color 
     , height :: Int
@@ -63,13 +100,62 @@ decodeJsonTileset js = do
                 source <- o .: "source"
                 pure $ Reference { source, firstgid }
 
+decodeJsonProperty :: Json -> Either String Property
+decodeJsonProperty js = do
+        o <- decodeJson js
+        name <- o .: "name"
+        ptype <- o .: "type"
+        value <- o .: "value"
+        pure {name
+             ,value
+             ,"type" : ptype
+        }
+
+decodeJsonLayer :: Json -> Either String Layer
+decodeJsonLayer  js = do
+      o <- decodeJson js
+      text <- o .: "type"
+      case text of 
+        "tilelayer" -> TileLayer <$> decodeTileData js
+        x -> throwError $  x <> " is not a layer type"
+
+decodeTileData :: Json -> Either String TileData
+decodeTileData js = do
+        o <- decodeJson js
+        height <- o .: "height"
+        id <- o .: "id"
+        name <- o .: "name"
+        offsetX <- o .:? "offsetx"
+        offsetY <- o .:? "offsety"
+        opacity <- o .: "opacity"
+        properties <- o .:? "properties"
+        visible <- o .: "visible"
+        width <- o .: "width"
+        x <- o .: "x"
+        y <- o .: "y"
+        
+        pure $  {
+            height
+            , id
+            , name
+            , offsetX
+            , offsetY
+            , opacity
+            , properties
+            , visible
+            , width
+            , x 
+            , y
+        }
+
 decodeJsonMap :: Json -> Either String Map 
 decodeJsonMap js = do
         o <- decodeJson js
         backgroundColor <- o .:? "backgroundcolor"
         height <- o .: "height"
         infinite <- o .: "infinite"
-        layers <- o .: "layers"
+        layersArray <- o .: "layers"
+        layers <- traverse decodeJsonLayer layersArray
         nextLayerId <- o .: "nextlayerid"
         nextObjectId <- o .: "nextobjectid"
         orientation <- o .: "orientation"
