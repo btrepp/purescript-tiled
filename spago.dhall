@@ -20,7 +20,8 @@ You can edit this file as you like.
     , "arraybuffer"
     , "pako"
     , "simple-json"
-    , "filterable" ]
+    , "filterable"
+    ]
 , packages =
     ./packages.dhall
 }
