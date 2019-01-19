@@ -19,7 +19,8 @@ You can edit this file as you like.
     , "base64-codec"
     , "arraybuffer"
     , "pako"
-    , "simple-json" ]
+    , "simple-json"
+    , "filterable" ]
 , packages =
     ./packages.dhall
 }

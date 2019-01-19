@@ -1,7 +1,10 @@
 module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
+
+import Data.Array as Array
 import Data.Map as Map
-import Data.Tiled.File.Map (Map)
+import Data.Tiled.File.Map (Map, externalTilesets)
+import Data.Tiled.Orientation (Orientation(..))
 import Data.Tiled.RenderOrder (RenderOrder(..))
 import Test.Tiled.Util (testField)
 import Test.Tiled.Util as T
@@ -20,10 +23,10 @@ desert =
         test' "tileheight" _.tileHeight 32
         test' "tilewidth" _.tileWidth 32
         test' "version" _.version  1.2
-        -- test' "layer count" (_.layers >>> Array.length) 1
-        --test' "orientation" _.orientation Orthoganal
-        --test' "external paths" externalTileSets expectedPaths 
-        
+        test' "layer count" (_.layers >>> Array.length) 1
+        test' "orientation" _.orientation Orthoganal
+        test' "external paths" externalTilesets expectedPaths 
+    
         {-suite "layers" do
             suite "index 0" do
                 test' "height" (Just 40) $ preview (_layer 0 <<< _height)
