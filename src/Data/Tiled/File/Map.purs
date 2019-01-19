@@ -12,16 +12,16 @@ import Prelude
 
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut (Json, decodeJson, (.:), (.:?))
-import Data.Either (Either)
+import Data.Either (Either,hush,note)
 import Data.Filterable (compact)
 import Data.Map as M
 import Data.Maybe (Maybe(..))
-import Data.Tiled.Color (Color)
 import Data.Tiled.File.Tileset as TS
 import Data.Tiled.Orientation (Orientation)
 import Data.Tiled.RenderOrder (RenderOrder)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
+import Control.Alt ((<|>))
 import Type.Data.Boolean (kind Boolean)
 
 
@@ -42,13 +42,17 @@ data Tileset = Embedded TS.Tileset
 -- | The layer type
 -- | This can be tiles, objects, images
 -- | or a further grouping of layers
-data Layer = TileLayer TileData
+data Layer = TileLayer TileLayer
+
+data Data = DataArray (Array Int)
+          | DataString String
 
 -- | A Data Layer in the tiled program
 -- | This corresponds to tile information
-type TileData =  {
+type TileLayer =  {
     height :: Int
     , id :: Int
+    , data :: Data
     , name :: String
     , offsetX :: Maybe Number
     , offsetY :: Maybe Number
@@ -65,7 +69,7 @@ type TileData =  {
 -- | It may require the loading of any external
 -- | tilesets to be useable
 type Map = 
-    { backgroundColor:: Maybe Color 
+    { backgroundColor:: Maybe String
     , height :: Int
     , infinite :: Boolean
     , layers :: Array Layer
@@ -111,6 +115,15 @@ decodeJsonProperty js = do
              ,"type" : ptype
         }
 
+decodeJsonData :: Json -> Either String Data
+decodeJsonData js = 
+    note "Data is not a string or array"
+        $ hush array <|> hush string
+    where 
+        array = DataArray <$> decodeJson js
+        string = DataString <$> decodeJson js
+
+
 decodeJsonLayer :: Json -> Either String Layer
 decodeJsonLayer  js = do
       o <- decodeJson js
@@ -119,7 +132,7 @@ decodeJsonLayer  js = do
         "tilelayer" -> TileLayer <$> decodeTileData js
         x -> throwError $  x <> " is not a layer type"
 
-decodeTileData :: Json -> Either String TileData
+decodeTileData :: Json -> Either String TileLayer
 decodeTileData js = do
         o <- decodeJson js
         height <- o .: "height"
@@ -133,10 +146,12 @@ decodeTileData js = do
         width <- o .: "width"
         x <- o .: "x"
         y <- o .: "y"
+        data_ <- o .: "data" >>= decodeJsonData
         
         pure $  {
             height
             , id
+            , "data" : data_
             , name
             , offsetX
             , offsetY
