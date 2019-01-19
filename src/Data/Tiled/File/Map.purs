@@ -154,8 +154,7 @@ decodeJsonMap js = do
         backgroundColor <- o .:? "backgroundcolor"
         height <- o .: "height"
         infinite <- o .: "infinite"
-        layersArray <- o .: "layers"
-        layers <- traverse decodeJsonLayer layersArray
+        layers <- o .: "layers" >>= traverse decodeJsonLayer
         nextLayerId <- o .: "nextlayerid"
         nextObjectId <- o .: "nextobjectid"
         orientation <- o .: "orientation"
@@ -163,8 +162,7 @@ decodeJsonMap js = do
         renderOrder <- o .: "renderorder"
         tiledVersion <- o .: "tiledversion"
         tileHeight <- o .: "tileheight"
-        tileSetsJs <- o .: "tilesets"
-        tileSets <- traverse decodeJsonTileset tileSetsJs
+        tileSets <- o .: "tilesets" >>= traverse decodeJsonTileset
         tileWidth <- o .: "tilewidth"
         t <- o .: "type"
         version <- o .: "version"
