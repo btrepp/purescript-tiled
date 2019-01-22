@@ -1,7 +1,9 @@
 module Data.Tiled.File.Map 
     (Map
     ,Tileset
-    ,Layer
+    ,Layer(..)
+    ,TileLayer
+    ,Data(..)
     ,Property
     ,decodeJsonMap
     ,externalTilesets

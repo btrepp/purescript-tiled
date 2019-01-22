@@ -3,12 +3,14 @@ import Prelude
 
 import Data.Array as Array
 import Data.Map as Map
-import Data.Tiled.File.Map (Map, externalTilesets)
+import Data.Maybe (Maybe(..))
+import Data.Tiled.File.Map (Map, Layer(..), TileLayer, Data(..), externalTilesets)
 import Data.Tiled.Orientation (Orientation(..))
 import Data.Tiled.RenderOrder (RenderOrder(..))
 import Test.Tiled.Util (testField)
 import Test.Tiled.Util as T
 import Test.Unit (TestSuite, suite)
+import Type.Data.Boolean (kind Boolean)
 
 desert :: TestSuite
 desert = 
@@ -27,28 +29,34 @@ desert =
         test' "orientation" _.orientation Orthoganal
         test' "external paths" externalTilesets expectedTilesets 
 
-    {-
         suite "layers" do
             suite "index 0" do
-                let layer = (_.layer )
-                test' "height" (Just 40) $ preview (_layer 0 <<< _height)
-                test' "id" (Just 1) $ preview (_layer 0 <<< _id)
-                test' "name" (Just "Ground") $ preview (_layer 0 <<< _name)
-                test' "opacity" (Just 1) $ preview (_layer 0 <<< _opacity)
-                test' "type" (true) $ preview (_layer 0 <<< _type) >>>  isTile
-                test' "visibile" (Just true) $ preview (_layer 0 <<< _visible) 
-                test' "width" (Just 40) $ preview (_layer 0 <<< _width)
-                test' "x" (Just 0) $ preview (_layer 0 <<< _x)
-                test' "y" (Just 0) $ preview (_layer 0 <<< _y)
+                test' "height" (layer 0 >>> map _.height) (pure 40) 
+                test' "id" (layer 0 >>> map _.id) (pure 1)
+                test' "name" (layer 0 >>> map _.name) (pure "Ground")
+                test' "opacity" (layer 0>>> map _.opacity) (pure 1)
+                test' "visible" (layer 0>>> map _.visible) (pure true)
+                test' "width" (layer 0>>> map _.width) (pure 40)
+                test' "x" (layer 0>>> map _.x) (pure 0)
+                test' "y" (layer 0>>> map _.y) (pure 0)
+
             suite "tile" do
                 suite "index 0" do
-                    test' "gid" (Just 30) $ preview (_tile 0 0 <<< _gid)
-                    test' "flipx" (Just false) $ preview (_tile 0 0 <<< _flipX)
-                    test' "flipy" (Just false) $ preview (_tile 0 0 <<< _flipY)
-                    test' "flipdiag" (Just false) 
-                        $ preview (_tile 0 0 <<< _flipDiagonal)
-                    pure unit-}
+                    let tile = layer 0 >>> map _.data 
+                                       >>> map isArrayString
+                    test' "value" (tile ) (pure true)
     where 
+
+        isArrayString :: Data -> Boolean
+        isArrayString (DataString x) = true
+        isArrayString _ = false
+
+        layer :: Int -> Map -> Maybe TileLayer
+        layer ix map = _.layers map # flip Array.index ix >>= unlayer
+    
+        unlayer :: Layer -> Maybe TileLayer
+        unlayer (TileLayer l) = pure l
+    
         test' :: forall b . Show b => Eq b => 
                             String -> (Map ->  b) -> b-> TestSuite
         test' name acc exp  = testField T.desertMap name acc exp
