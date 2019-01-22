@@ -1,6 +1,8 @@
 module Test.Data.Tiled.File.Tileset (tilesetSuite) where
 
 import Prelude
+import Data.Array as Array
+import Data.Maybe (fromMaybe)
 import Data.Tiled.File.Tileset (Tileset)
 import Test.Tiled.Util (testField)
 import Test.Tiled.Util as T
@@ -22,28 +24,18 @@ desertSuite =
       test' "tilewidth" _.tileWidth 32
       test' "type" _.type "tileset"
       test' "version" _.version 1.2
-      {-suite "tiles" do
-        test' "count" (_.tiles >>> map Array.length) (Just 48)
+      suite "tiles" do
+        test' "count" (_.tiles >>> map Array.length) (pure 48)
         suite "index 0" do
-          test' "id" 
-              (preview $ _tileIx 0 
-                        <<< prop (SProxy::SProxy "id"))
-              (Just 0)
-          test' "terrain"
-              (preview $ _tileIx 0 
-                        <<< prop (SProxy::SProxy "terrain"))
-              (Just $ [0,0,0,1])
+          let tile m = flip Array.index 0 $ fromMaybe mempty (_.tiles m)
+          test' "id" (tile >>> map _.id) (pure 0)
+          test' "terrain" (tile >>> map _.terrain) (pure [0,0,0,1])
       suite "terrains" do
-        test' "count" (_.terrains >>> map Array.length) (Just 4)
+        test' "count" (_.terrains >>> map Array.length) (pure 4)
         suite "index 0" do
-          test' "name" 
-              (preview $ _terrainIndex 0 
-                        <<< prop (SProxy::SProxy "name")) 
-              (Just "Desert")
-          test' "tile"
-              (preview $ _terrainIndex 0 
-                        <<< prop (SProxy::SProxy "tile"))
-              (Just 29)-}
+          let terrain m = flip Array.index 0 $ fromMaybe mempty (_.terrains m)
+          test' "name" (terrain >>> map _.name) (pure "Desert")
+          test' "tile" (terrain >>> map _.tile) (pure 29)
 
   where 
     test' :: forall b . Show b => Eq b =>
