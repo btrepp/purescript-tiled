@@ -3,7 +3,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Tiled.File.Map (Map, Layer(..), TileLayer, Data(..), externalTilesets)
 import Data.Tiled.Orientation (Orientation(..))
 import Data.Tiled.RenderOrder (RenderOrder(..))
