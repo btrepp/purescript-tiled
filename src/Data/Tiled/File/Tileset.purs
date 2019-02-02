@@ -67,7 +67,7 @@ decodeJsonTileset js = do
     margin <- o .: "margin"
     name <- o .: "name"
     spacing <- o .: "spacing"
-    terrainsArray <- o .: "terrains"
+    terrainsArray <- o .:? "terrains"
     terrains <- case terrainsArray of
                     Just x -> Just <$> traverse decodeJsonTerrain x
                     Nothing -> pure Nothing
