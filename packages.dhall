@@ -116,38 +116,6 @@ let upstream =
 
 let overrides = {=}
 
-let additions =
-      { base64-codec =
-          mkPackage
-          [ "arraybuffer-types", "prelude", "newtype" ]
-          "https://github.com/AlexaDeWit/purescript-base64-codec.git"
-          "v1.0.0"
-      , arraybuffer =
-          mkPackage
-          [ "arraybuffer-types", "maybe", "effect", "uint", "text-encoding" ]
-          "https://github.com/jacereda/purescript-arraybuffer.git"
-          "v8.0.2"
-      , uint =
-          mkPackage
-          [ "maybe", "math" ]
-          "https://github.com/zaquest/purescript-uint.git"
-          "v5.1.0"
-      , text-encoding =
-          mkPackage
-          [ "prelude"
-          , "functions"
-          , "either"
-          , "arraybuffer-types"
-          , "exceptions"
-          , "strings"
-          ]
-          "https://github.com/AlexaDeWit/purescript-text-encoding.git"
-          "v0.0.9"
-      , pako =
-          mkPackage
-          ([] : List Text)
-          "https://github.com/jacereda/purescript-pako.git"
-          "v0.3.0"
-      }
+let additions = {=}
 
 in  upstream ⫽ overrides ⫽ additions

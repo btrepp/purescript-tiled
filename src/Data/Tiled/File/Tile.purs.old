@@ -1,3 +1,4 @@
+{-
 module Data.Tiled.File.Tile where
 
 import Prelude
@@ -140,3 +141,5 @@ instance decodeJsonTile :: DecodeJson TileLayer where
 
             convert :: Array Int -> Array Data
             convert x = map fromInt x
+
+-}        
