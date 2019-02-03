@@ -1,29 +1,33 @@
 module Data.Tiled.File.Map 
     (Map
-    ,Tileset
+    ,Tileset(..)
     ,Layer(..)
     ,TileLayer
     ,Data(..)
     ,Property
     ,decodeJsonMap
     ,externalTilesets
+    ,solveTilesets
     )
      where
 
 import Prelude
 
+import Control.Alt ((<|>))
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut (Json, decodeJson, (.:), (.:?))
-import Data.Either (Either,hush,note)
+import Data.Either (Either, hush, note)
 import Data.Filterable (compact)
 import Data.Map as M
+import Data.List as List
 import Data.Maybe (Maybe(..))
+import Data.Tiled.File.Compression (Compression)
+import Data.Tiled.File.Encoding (Encoding)
 import Data.Tiled.File.Tileset as TS
 import Data.Tiled.Orientation (Orientation)
 import Data.Tiled.RenderOrder (RenderOrder)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
-import Control.Alt ((<|>))
 import Type.Data.Boolean (kind Boolean)
 
 
@@ -37,7 +41,8 @@ type Property =
 -- | A tileset inside a map
 -- | This can be a fully embedded tileset
 -- | or a reference
-data Tileset = Embedded TS.Tileset
+data Tileset = Embedded { firstgid :: Int 
+                         , data :: TS.Tileset }
              | Reference { firstgid :: Int
                          , source :: String}
                           
@@ -56,6 +61,8 @@ type TileLayer =  {
     , id :: Int
     , data :: Data
     , name :: String
+    , compression :: Maybe Compression
+    , encoding :: Maybe Encoding
     , offsetX :: Maybe Number
     , offsetY :: Maybe Number
     , opacity :: Int
@@ -89,21 +96,43 @@ type Map =
     , width:: Int
 }
 
-externalTilesets :: Map -> M.Map Int String
+-- | Given a map and the external tilesets
+-- | Produce a combined workable map of firstgids
+-- | to fullly fleshed tilesets
+solveTilesets :: Map 
+                 -> M.Map String TS.Tileset 
+                 -> Either String (M.Map Int TS.Tileset)
+solveTilesets map externals = 
+    M.fromFoldable <$> traverse tileset map.tileSets
+
+    where
+        tileset :: Tileset -> Either String (Tuple Int TS.Tileset)
+        tileset (Reference {firstgid, source}) =
+            note (source <> " is missing") 
+            $ Tuple firstgid
+            <$> M.lookup source externals
+        tileset (Embedded {firstgid, data:data'}) =
+            pure $ Tuple firstgid data'
+
+-- | Returns the names of extra tilesets that
+-- | Need to be loaded
+externalTilesets :: Map -> List.List String
 externalTilesets m = 
-    M.fromFoldable $ compact $ map toTuple m.tileSets
-    where toTuple :: Tileset -> Maybe (Tuple Int String)
-          toTuple (Embedded _) = Nothing
-          toTuple (Reference a) = Just $ Tuple a.firstgid a.source
+    List.fromFoldable $ compact $ map value m.tileSets
+    where value :: Tileset -> Maybe String
+          value (Embedded _) = Nothing
+          value (Reference a) = pure a.source
 
 decodeJsonTileset :: Json -> Either String Tileset
 decodeJsonTileset js = do
         o <- decodeJson js
-        gid <- o .:? "firstgid"
-        case gid of
-            Nothing -> Embedded <$> TS.decodeJsonTileset js
-            Just firstgid -> do
-                source <- o .: "source"
+        firstgid <- o .: "firstgid"
+        sourceopt <- o .:? "source"
+        case sourceopt of
+            Nothing -> do 
+                 data' <- TS.decodeJsonTileset js
+                 pure $ Embedded { data: data', firstgid}
+            Just source -> do
                 pure $ Reference { source, firstgid }
 
 decodeJsonProperty :: Json -> Either String Property
@@ -146,6 +175,8 @@ decodeTileData js = do
         properties <- o .:? "properties"
         visible <- o .: "visible"
         width <- o .: "width"
+        compression <- o .:? "compression"
+        encoding <- o .:? "encoding"
         x <- o .: "x"
         y <- o .: "y"
         data_ <- o .: "data" >>= decodeJsonData
@@ -160,6 +191,8 @@ decodeTileData js = do
             , opacity
             , properties
             , visible
+            , compression
+            , encoding
             , width
             , x 
             , y
