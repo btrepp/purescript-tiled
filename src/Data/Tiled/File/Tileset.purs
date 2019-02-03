@@ -2,7 +2,8 @@ module Data.Tiled.File.Tileset
     (Tile
     , Tileset
     , Terrain 
-    , decodeJsonTileset)
+    , decodeJsonTileset
+    , tiles)
     where
   
 import Prelude

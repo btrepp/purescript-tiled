@@ -2,14 +2,19 @@
 -- | for getting 'renderable' data
 -- | out of the files
 module Data.Tiled
+    (textures
+    , Texture
+    , Sprite )
     where
 
 import Prelude
-import Data.List(List)
-import Data.Map as H
+
 import Data.Either (Either(..))
-import Data.Tiled.File.Map(Map)
-import Data.Tiled.File.Tileset(Tileset)
+import Data.List (List, fold)
+import Data.Map as H
+import Data.Tiled.File.Map (Map, solveTilesets)
+import Data.Tiled.File.Tileset (Tileset, tiles)
+import Data.Tuple (Tuple(..))
 
 -- | A texture is based of an image in the map/tileset
 -- | It has a width, height and offsets in the image
@@ -37,8 +42,15 @@ type Sprite =
 textures :: Map 
          -> H.Map String Tileset 
          -> Either String (H.Map Int Texture)
-textures map tilesets = 
-    Left "NOT IMPLEMENTED"         
+textures map' tilesets = do
+    tileMap <- solveTilesets map' tilesets
+    let tuples = (H.toUnfoldable tileMap) :: List (Tuple Int Tileset)
+    let tileList = (map tiles' tuples ) 
+    pure $ fold tileList
+
+    where tiles' (Tuple k v) = tiles v k
+          combine a b = b
+          
 
 -- | Loads all the sprites from the map
 -- | This requires the external tilesets
