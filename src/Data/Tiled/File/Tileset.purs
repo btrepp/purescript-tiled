@@ -3,7 +3,7 @@ module Data.Tiled.File.Tileset
     , Tileset
     , Terrain 
     , decodeJsonTileset
-    , tiles)
+    , tileMap)
     where
   
 import Prelude
@@ -45,12 +45,12 @@ type Tileset =
 
 -- | Extracts the tiles from the tileset
 -- | Converting into the global id format
-tiles :: Tileset -> Int -> Map Int {image:: String
+tileMap :: Tileset -> Int -> Map Int {image:: String
                                    ,height :: Int
                                    ,width :: Int
                                    ,offsetX :: Int
                                    ,offsetY :: Int}
-tiles tileset firstgid = 
+tileMap tileset firstgid = 
     let width = tileset.tileWidth
         height = tileset.tileHeight
         image = tileset.image

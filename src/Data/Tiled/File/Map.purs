@@ -7,7 +7,6 @@ module Data.Tiled.File.Map
     ,Property
     ,decodeJsonMap
     ,externalTilesets
-    ,solveTilesets
     )
      where
 
@@ -18,16 +17,14 @@ import Control.Monad.Error.Class (throwError)
 import Data.Argonaut (Json, decodeJson, (.:), (.:?))
 import Data.Either (Either, hush, note)
 import Data.Filterable (compact)
-import Data.Map as M
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Tiled.File.Compression (Compression)
 import Data.Tiled.File.Encoding (Encoding)
 import Data.Tiled.File.Tileset as TS
-import Data.Tiled.Orientation (Orientation)
-import Data.Tiled.RenderOrder (RenderOrder)
+import Data.Tiled.File.Orientation (Orientation)
+import Data.Tiled.File.RenderOrder (RenderOrder)
 import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
 import Type.Data.Boolean (kind Boolean)
 
 
@@ -96,23 +93,36 @@ type Map =
     , width:: Int
 }
 
--- | Given a map and the external tilesets
--- | Produce a combined workable map of firstgids
--- | to fullly fleshed tilesets
-solveTilesets :: Map 
-                 -> M.Map String TS.Tileset 
-                 -> Either String (M.Map Int TS.Tileset)
-solveTilesets map externals = 
-    M.fromFoldable <$> traverse tileset map.tileSets
 
-    where
-        tileset :: Tileset -> Either String (Tuple Int TS.Tileset)
-        tileset (Reference {firstgid, source}) =
-            note (source <> " is missing") 
-            $ Tuple firstgid
-            <$> M.lookup source externals
-        tileset (Embedded {firstgid, data:data'}) =
-            pure $ Tuple firstgid data'
+-- tiles :: Map -> Except String (List.List _)
+-- tiles map' = 
+--     List.concat 
+--     <$> traverse getlayer' layers
+
+--     where 
+--         width = _.tileWidth map'
+--         height = _.tileHeight map'
+
+--         layers :: List.List Layer
+--         layers = List.fromFoldable $ _.layers map'
+
+--         arrayItem :: Int -> Tile
+--         arrayItem globalId =  { width 
+--                          , height
+--                          , globalId
+--                          , flipX : false
+--                          , flipY: false
+--                          }
+
+--         data' :: Data -> Except String (List.List Tile)
+--         data' (DataArray i) = pure $ map arrayItem $ List.fromFoldable i
+--         data' (DataString s) = throwError "Compressed formats not supported yet"
+
+--         getlayer' :: Layer -> Except String (List.List Tile)
+--         getlayer' (TileLayer layer) = 
+--             data' $ _.data layer
+          
+
 
 -- | Returns the names of extra tilesets that
 -- | Need to be loaded

@@ -1,4 +1,4 @@
-module Data.Tiled.StaggerIndex where
+module Data.Tiled.File.StaggerIndex where
 
 import Prelude
 import Control.Monad.Error.Class (throwError)

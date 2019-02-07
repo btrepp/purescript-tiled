@@ -1,4 +1,4 @@
-module Data.Tiled.Orientation where
+module Data.Tiled.File.Orientation where
 import Prelude
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut.Decode.Class (class DecodeJson, decodeJson)

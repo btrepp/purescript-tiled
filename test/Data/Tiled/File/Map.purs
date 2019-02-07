@@ -2,11 +2,11 @@ module Test.Data.Tiled.File.Map (mapSuite) where
 import Prelude
 
 import Data.Array as Array
-import Data.Map as Map
 import Data.Maybe (Maybe)
+import Data.List (List)
 import Data.Tiled.File.Map (Map, Layer(..), TileLayer, Data(..), externalTilesets)
-import Data.Tiled.Orientation (Orientation(..))
-import Data.Tiled.RenderOrder (RenderOrder(..))
+import Data.Tiled.File.Orientation (Orientation(..))
+import Data.Tiled.File.RenderOrder (RenderOrder(..))
 import Test.Tiled.Util (testField)
 import Test.Tiled.Util as T
 import Test.Unit (TestSuite, suite)
@@ -61,9 +61,8 @@ desert =
                             String -> (Map ->  b) -> b-> TestSuite
         test' name acc exp  = testField T.desertMap name acc exp
 
-        expectedTilesets :: Map.Map Int String
-        expectedTilesets = 
-            Map.singleton 1 "desert_tileset.json"
+        expectedTilesets :: List String
+        expectedTilesets =  pure "desert_tileset.json"
 
 mapSuite :: TestSuite
 mapSuite = 
