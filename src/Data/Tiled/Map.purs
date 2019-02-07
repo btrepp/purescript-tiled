@@ -1,13 +1,19 @@
 module Data.Tiled.Map 
     (Map
-    , fromFiles)
+    , mapFromFiles)
     where
-import Data.Tiled.Tile (Tile)
-import Data.List (List)
-import Data.Tiled.File.Map as MapFile
-import Data.Tiled.File.Tileset as TilesetFile
+import Prelude
+
+import Control.Monad.Except (Except, except, throwError)
+import Data.Array (mapWithIndex)
+import Data.Either (note)
+import Data.List (List, fromFoldable, concat)
 import Data.Map as M
-import Control.Monad.Except (Except, throwError)
+import Data.Tiled.File.Map as MapFile
+import Data.Tiled.Texture (Texture)
+import Data.Tiled.Tile (Tile)
+import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 
 -- | A fully loaded map
 -- | This data structure should represent a valid map
@@ -17,15 +23,50 @@ import Control.Monad.Except (Except, throwError)
 type Map = 
     { height :: Int
     , width :: Int
-    , tiles :: List Tile
+    , tiles :: List (Maybe Tile)
     }
 
-
-
-fromFiles :: MapFile.Map 
-            -> M.Map String TilesetFile.Tileset 
+-- | Builds the map from a map file 
+-- | and a loaded texture set
+mapFromFiles :: MapFile.Map 
+            -> M.Map Int Texture
             -> Except String Map
-fromFiles mapfile
-          tilesets
-          =
-          throwError "TODO"
+mapFromFiles mapfile
+          textures = do
+            tiles <- concat
+                     <$> fromFoldable
+                     <$> (traverse layer $ _.layers mapfile)
+            let height = _.height mapfile
+            let width = _.width mapfile
+            pure { tiles, height, width}
+            where
+                layer :: MapFile.Layer -> Except String (List (Maybe Tile))
+                layer (MapFile.TileLayer t) = 
+                    case t.data of
+                        MapFile.DataString s -> 
+                            throwError "compressed not supported"
+                        MapFile.DataArray d -> 
+                            fromFoldable 
+                            <$> mapWithIndex tile
+                            <$> traverse findTexture d
+
+                    where 
+                        findTexture :: Int -> Except String (Maybe Texture)
+                        findTexture 0 = pure Nothing
+                        findTexture i = 
+                            Just
+                            <$> (except 
+                            $ note (show i <> " is not in the texture set")
+                            $ M.lookup i textures)
+
+                        tile :: Int -> Maybe Texture -> Maybe Tile                            
+                        tile _ Nothing = Nothing
+                        tile index (Just texture) = 
+                            pure $ { texture
+                            , height : mapfile.tileHeight
+                            , width : mapfile.tileWidth
+                            , flipX : false
+                            , flipY : false
+                            , x : 0 -- How? function of index?
+                            , y : 0 -- How? function of index?
+                            }

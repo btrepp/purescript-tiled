@@ -4,4 +4,4 @@ module Data.Tiled.Image
 
 import Web.File.Blob (Blob)
 
-newtype Image = Image Blob
+type Image = Blob

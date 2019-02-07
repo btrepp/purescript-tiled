@@ -9,8 +9,8 @@ module Data.Tiled(
     where
 
 import Data.Tiled.Tile (Tile) as Tile
-import Data.Tiled.Texture (Texture) as Texture
-import Data.Tiled.Map (Map) as Map
+import Data.Tiled.Texture (Texture,texturesFromFiles) as Texture
+import Data.Tiled.Map (Map,mapFromFiles) as Map
 
 -- | Loads all the sprites from the map
 -- | This requires the external tilesets

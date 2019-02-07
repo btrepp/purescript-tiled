@@ -1,15 +1,13 @@
 module Data.Tiled.Texture
-    (Texture)
+    (Texture,texturesFromFiles)
     where
 
 import Prelude
 
-import Control.Monad.Except (Except, except, throwError)
+import Control.Monad.Except (Except, except)
 import Data.Array ((..))
 import Data.Either (note)
-import Data.FunctorWithIndex (mapWithIndex)
-import Data.List (List)
-import Data.List (concat)
+import Data.List (List,concat)
 import Data.List as List
 import Data.Map as M
 import Data.Tiled.File.Map as MapFile
@@ -56,11 +54,11 @@ allTilesets map externals =
 -- | Requires any external tilesets to be supplied
 -- | From this you should be able to take a global tile id
 -- | And retrieve the texture
-fromFiles :: MapFile.Map
-          -> M.Map String TilesetFile.Tileset
-          -> M.Map String Image
-          -> Except String (M.Map Int Texture)
-fromFiles mapfile tilesetfiles images = do
+texturesFromFiles :: MapFile.Map
+                  -> M.Map String TilesetFile.Tileset
+                  -> M.Map String Image
+                  -> Except String (M.Map Int Texture)
+texturesFromFiles mapfile tilesetfiles images = do
     tilesets <- allTilesets mapfile tilesetfiles
     lists <- M.values <$> traverseWithIndex tilesetFile tilesets
     pure $ M.fromFoldable $ concat lists
