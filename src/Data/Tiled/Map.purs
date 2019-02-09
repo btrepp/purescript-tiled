@@ -6,13 +6,14 @@ import Prelude
 
 import Control.Monad.Except (Except, except, throwError)
 import Data.Array (mapWithIndex)
+import Data.Compactable (compact)
 import Data.Either (note)
 import Data.List (List, fromFoldable, concat)
 import Data.Map as M
+import Data.Maybe (Maybe(..))
 import Data.Tiled.File.Map as MapFile
 import Data.Tiled.Texture (Texture)
 import Data.Tiled.Tile (Tile)
-import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 
 -- | A fully loaded map
@@ -23,7 +24,7 @@ import Data.Traversable (traverse)
 type Map = 
     { height :: Int
     , width :: Int
-    , tiles :: List (Maybe Tile)
+    , tiles :: List Tile
     }
 
 -- | Builds the map from a map file 
@@ -33,12 +34,13 @@ mapFromFiles :: MapFile.Map
             -> Except String Map
 mapFromFiles mapfile
           textures = do
-            tiles <- concat
+            tiles <- compact
+                     <$>concat
                      <$> fromFoldable
                      <$> (traverse layer $ _.layers mapfile)
-            let height = _.height mapfile
-            let width = _.width mapfile
-            pure { tiles, height, width}
+            let height = _.height mapfile * _.tileHeight mapfile
+            let width = _.width mapfile * _.tileWidth mapfile
+            pure {  tiles, height, width}
             where
                 layer :: MapFile.Layer -> Except String (List (Maybe Tile))
                 layer (MapFile.TileLayer t) = 
@@ -67,6 +69,10 @@ mapFromFiles mapfile
                             , width : mapfile.tileWidth
                             , flipX : false
                             , flipY : false
-                            , x : 0 -- How? function of index?
-                            , y : 0 -- How? function of index?
+                            , x 
+                            , y 
                             }
+                            where 
+                                y = (index `mod` _.height mapfile) 
+                                        * _.tileHeight mapfile
+                                x = index
