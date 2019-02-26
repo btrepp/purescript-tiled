@@ -73,6 +73,7 @@ mapFromFiles mapfile
                             , y 
                             }
                             where 
-                                y = (index `mod` _.height mapfile) 
+                                x = (index `mod` _.height mapfile) 
                                         * _.tileHeight mapfile
-                                x = index
+                                y = (index / _.height mapfile)
+                                        * _.tileWidth mapfile
